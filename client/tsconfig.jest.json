@@ -1,0 +1,12 @@
+{
+    "preset": "react", 
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "paths": {
+            "react": [ "./node_modules/@types/react" ]
+        },
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true
+    }
+}

@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+# *.py[cod]
+.idea
+.coverage
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.vscode
+
+# Database stuff
+*.sqlite3*
+*.sqlite3-journal
+
+# React
+.parcel-cache
+node_modules
+dist/

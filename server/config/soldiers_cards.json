@@ -1,0 +1,94 @@
+[
+	{
+		"en_name": "Rider",
+		"cs_name": "Jezdec",
+		"price_unit": "weapons",
+		"price_amount": 2,
+		"enemy_lost_unit": "attack",
+		"enemy_lost_amount": 4,
+		"count_in_deck": 12
+	},
+	{
+		"en_name": "Archer",
+		"cs_name": "Střelec",
+		"price_unit": "weapons",
+		"price_amount": 1,
+		"enemy_lost_unit": "attack",
+		"enemy_lost_amount": 2,
+		"count_in_deck": 12
+	},
+	{
+		"en_name": "Saboteur",
+		"cs_name": "Sabotér",
+		"price_unit": "weapons",
+		"price_amount": 12,
+		"enemy_lost_unit": "materials",
+		"enemy_lost_amount": 4,
+		"count_in_deck": 8
+	},
+	{
+		"en_name": "Knight",
+		"cs_name": "Rytíř",
+		"price_unit": "weapons",
+		"price_amount": 2,
+		"enemy_lost_unit": "attack",
+		"enemy_lost_amount": 3,
+		"count_in_deck": 12
+	},
+	{
+		"en_name": "Platoon",
+		"cs_name": "Četa",
+		"price_unit": "weapons",
+		"price_amount": 4,
+		"enemy_lost_unit": "attack",
+		"enemy_lost_amount": 6,
+		"count_in_deck": 12
+	},
+	{
+		"en_name": "Thief",
+		"cs_name": "Zloděj",
+		"price_unit": "weapons",
+		"price_amount": 15,
+		"enemy_lost_unit": "materials",
+		"enemy_lost_amount": 5,
+		"bonus_unit": "materials",
+		"bonus_amount": 5,
+		"count_in_deck": 8
+	},
+	{
+		"en_name": "Recruit",
+		"cs_name": "Nábor",
+		"price_unit": "weapons",
+		"price_amount": 8,
+		"bonus_unit": "soldiers",
+		"bonus_amount": 1,
+		"count_in_deck": 8
+	},
+	{
+		"en_name": "Attack",
+		"cs_name": "Zteč",
+		"price_unit": "weapons",
+		"price_amount": 10,
+		"enemy_lost_unit": "attack",
+		"enemy_lost_amount": 12,
+		"count_in_deck": 8
+	},
+	{
+		"en_name": "SWAT",
+		"cs_name": "SWAT",
+		"price_unit": "weapons",
+		"price_amount": 18,
+		"enemy_lost_unit": "castle",
+		"enemy_lost_amount": 10,
+		"count_in_deck": 8
+	},
+	{
+		"en_name": "Banshee",
+		"cs_name": "Smrtka",
+		"price_unit": "weapons",
+		"price_amount": 28,
+		"enemy_lost_unit": "attack",
+		"enemy_lost_amount": 32,
+		"count_in_deck": 4
+	}
+]

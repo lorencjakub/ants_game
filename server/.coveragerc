@@ -1,0 +1,12 @@
+[run]
+omit =
+    database.py
+    */__init__.py
+    config_dev.py
+    config_prod.py
+    config_test.py
+    distinct_types.py
+    main_run.py
+    tests/unit/webapp//mocking.py
+    api/models/models.py
+    extensions.py
