@@ -86,7 +86,7 @@
 		"price_unit": "crystals",
 		"price_amount": 25,
 		"enemy_lost_unit": "all",
-		"enemy_lost_amount": 1,
+		"enemy_lost_amount": -1,
 		"bonus_unit": "all",
 		"bonus_amount": 1,
 		"count_in_deck": 4

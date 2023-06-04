@@ -1,8 +1,21 @@
 from flask import request, Response
 from . import main
 from application.services import init_room, player_join_room, make_switch_turn,\
-    discard_card, draw_new_card, use_card_from_hand
+    discard_card, draw_new_card, use_card_from_hand, deactivate_room, check_room
 from application.services.error_handlers import CustomError
+import traceback
+import logging
+
+
+@main.before_request
+def check_nonactivate_room():
+    """Check if room is still active and you are able to manipulate with it"""
+    try:
+        check_room(request)
+
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
 
 
 @main.route("/create_room", methods=["GET"])
@@ -12,6 +25,7 @@ def create_room() -> Response:
         return init_room()
 
     except Exception as e:
+        logging.error(traceback.format_exc())
         return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
 
 
@@ -22,6 +36,7 @@ def join_room(guid: str) -> Response:
         return player_join_room(guid)
 
     except Exception as e:
+        logging.error(traceback.format_exc())
         return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
 
 
@@ -32,6 +47,7 @@ def switch_turn(guid) -> Response:
         return make_switch_turn(guid)
 
     except Exception as e:
+        logging.error(traceback.format_exc())
         return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
 
 
@@ -42,6 +58,7 @@ def discard() -> Response:
         return discard_card(request)
 
     except Exception as e:
+        logging.error(traceback.format_exc())
         return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
 
 
@@ -52,6 +69,7 @@ def draw_card() -> Response:
         return draw_new_card(request)
 
     except Exception as e:
+        logging.error(traceback.format_exc())
         return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
 
 
@@ -62,4 +80,16 @@ def play_card() -> Response:
         return use_card_from_hand(request)
 
     except Exception as e:
+        logging.error(traceback.format_exc())
+        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
+
+
+@main.route("/lock_room/<guid>", methods=["GET"])
+def lock_room(guid: str) -> Response:
+    """Lock a room"""
+    try:
+        return deactivate_room(guid, request)
+
+    except Exception as e:
+        logging.error(traceback.format_exc())
         return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)

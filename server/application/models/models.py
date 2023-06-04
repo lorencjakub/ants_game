@@ -103,7 +103,8 @@ class Card(PkModel):
     bonus_amount = db.Column(db.Integer, db.CheckConstraint('bonus_amount >= 0 AND bonus_amount <= 32'), nullable=False,
                              default=0)
     enemy_lost_unit = db.Column(db.Enum(SourcesChoices), default=SourcesChoices.none, nullable=False)
-    enemy_lost_amount = db.Column(db.Integer, db.CheckConstraint('enemy_lost_amount >= 0 AND enemy_lost_amount <= 32'),
+    enemy_lost_amount = db.Column(db.Integer,
+                                  db.CheckConstraint('enemy_lost_amount >= -10 AND enemy_lost_amount <= 32'),
                                   nullable=False, default=0)
     item_name = db.Column(db.String(20), nullable=False, default="")
     count_in_deck = db.Column(db.Integer, db.CheckConstraint("count_in_deck >= 0 AND count_in_deck < 64"), default=1)
@@ -165,11 +166,11 @@ class Players(PkModel):
     sources_id = db.Column(db.ForeignKey("sources.id"))
     sources = db.relationship("Sources")
 
-    # def __str__(self) -> str:
-    #     return "<Player ID {id} from room {room}>".format(id=self.id, room=self.room.id)
-    #
-    # def __repr__(self) -> str:
-    #     return "<Player ID {id} from room {room}>".format(id=self.id, room=self.room.id)
+    def __str__(self) -> str:
+        return "<Player ID {id}>".format(id=self.id)
+
+    def __repr__(self) -> str:
+        return "<Player ID {id}>".format(id=self.id)
 
     @classmethod
     def create(cls, **kwargs):
@@ -212,28 +213,6 @@ class Players(PkModel):
 
         return player_room
 
-    def apply_cards_effect(
-            self, card: Union[BuildingCards, SoldiersCards, MagicCards],
-            apply_enemy_effects: bool = False
-    ):
-        if not self.sources:
-            raise CustomError("Player does not have any sources")
-
-        new_sources = mutate_db_object(create_data_dict(self.sources))
-
-        card_data = mutate_db_object(create_data_dict(card))
-        for key in card_data.keys():
-            if isinstance(card_data[key], enum.Enum):
-                card_data[key] = card_data[key].value
-
-        if not apply_enemy_effects:
-            new_sources[card_data["price_unit"]] -= card_data["price_amount"]
-
-        new_state = process_card_effects(new_sources, card_data, "enemy_lost" if apply_enemy_effects else "bonus")
-        self.sources.update(**new_state)
-
-        return new_state
-
 
 class Rooms(PkModel):
     __table_args__ = {'extend_existing': True}
@@ -246,14 +225,22 @@ class Rooms(PkModel):
     magic_cards_in_deck = db.relationship("MagicCards", secondary="magic_cards_in_deck")
     players = db.relationship("Players", secondary="players_in_rooms", back_populates="room")
     player_on_turn = db.Column(db.Integer, nullable=False, default=1)
+    winner = db.Column(db.String(32), nullable=True)
+    active = db.Column(db.Boolean, nullable=False, default=True)
 
-    # def __str__(self) -> str:
-    #     return "<Room ID {id} with players {players} ({player_on_turn} on turn)>".format(
-    #         id=self.id, players=self.players, player_on_turn=self.player_on_turn)
-    #
-    # def __repr__(self) -> str:
-    #     return "<Room ID {id} with players {players} ({player_on_turn} on turn)>".format(
-    #         id=self.id, players=self.players, player_on_turn=self.player_on_turn)
+    def __str__(self) -> str:
+        if not self.active:
+            return "<Non-active room ID {id}>".format(id=self.id)
+
+        return "<Room ID {id} with players {players} ({player_on_turn} on turn)>".format(
+            id=self.id, players=self.players, player_on_turn=self.player_on_turn)
+
+    def __repr__(self) -> str:
+        if not self.active:
+            return "<Non-active room ID {id}>".format(id=self.id)
+
+        return "<Room ID {id} with players {players} ({player_on_turn} on turn)>".format(
+            id=self.id, players=self.players, player_on_turn=self.player_on_turn)
 
     @classmethod
     def create(cls):
@@ -334,104 +321,71 @@ class Sources(PkModel):
     def __repr__(self) -> str:
         return "<Sources ID {id}>".format(id=self.id)
 
+    def grow_sources(self):
+        new_sources = create_data_dict(self)
+
+        for (source, ant) in [("bricks", "builders"), ("weapons", "soldiers"), ("crystals", "mages")]:
+            new_sources[source] += new_sources[ant]
+
+        self.update(**new_sources)
+
 
 # FUNCTIONS
 def mutate_db_object(obj):
-    res = None
-
     if isinstance(obj, list):
         res = []
         res.extend(obj)
+        return res
 
     elif isinstance(obj, dict):
         res = {}
         res.update(obj)
+        return res
 
-    return res
+    else:
+        return obj
 
 
 def get_table_by_tablename(tablename: str):
-    if tablename == "players_in_rooms":
-        return PlayersInRooms
+    match tablename:
+        case "players_in_rooms":
+            return PlayersInRooms
 
-    elif tablename == "building_cards_in_deck":
-        return BuildingCardsInDeck
+        case "building_cards_in_deck":
+            return BuildingCardsInDeck
 
-    elif tablename == "soldiers_cards_in_deck":
-        return SoldiersCardsInDeck
+        case "soldiers_cards_in_deck":
+            return SoldiersCardsInDeck
 
-    elif tablename == "magic_cards_in_deck":
-        return MagicCardsInDeck
+        case "magic_cards_in_deck":
+            return MagicCardsInDeck
 
-    elif tablename == "player_building_cards":
-        return PlayerBuildingCards
+        case "player_building_cards":
+            return PlayerBuildingCards
 
-    elif tablename == "player_soldiers_cards":
-        return PlayerSoldiersCards
+        case "player_soldiers_cards":
+            return PlayerSoldiersCards
 
-    elif tablename == "player_magic_cards":
-        return PlayerMagicCards
+        case "player_magic_cards":
+            return PlayerMagicCards
 
-    elif tablename == "building_cards":
-        return BuildingCards
+        case "building_cards":
+            return BuildingCards
 
-    elif tablename == "soldiers_cards":
-        return SoldiersCards
+        case "soldiers_cards":
+            return SoldiersCards
 
-    elif tablename == "magic_cards":
-        return MagicCards
+        case "magic_cards":
+            return MagicCards
 
-    elif tablename == "rooms":
-        return Rooms
+        case "rooms":
+            return Rooms
 
-    elif tablename == "players":
-        return Players
+        case "players":
+            return Players
 
-    else:
-        raise CustomError(f'Unknown tablename {tablename}')
-
-
-def remove_card_from_deck(
-        owner: Dict[str, str], deck: List[Union[BuildingCards, SoldiersCards, MagicCards]],
-        target_table_name
-) -> Union[BuildingCards, SoldiersCards, MagicCards]:
-    card = deck[random.randint(0, len(deck) - 1)]
-    model = get_table_by_tablename(target_table_name(card.__tablename__))
-    association = model.query.filter_by(card=card.id, **owner).first()
-
-    if not association or association.count == 0:
-        raise CustomError("Card not found in deck")
-
-    association.count -= 1
-    db.session.add(association)
-    db.session.commit()
-
-    return card
-
-
-def process_card_effects(new_sources, card_data, effect):
-    if card_data[f'{effect}_unit'] == "none":
-        pass
-
-    elif card_data[f'{effect}_unit'] == "all":
-        new_sources = {key: value + card_data[f'{effect}_amount'] for key, value in new_sources}
-
-    elif card_data[f'{effect}_unit'] == "materials":
-        for material in ["bricks", "weapons", "crystals"]:
-            new_sources[material] += card_data[f'{effect}_amount']
-
-    elif card_data[f'{effect}_unit'] == "attack":
-        if card_data[f'{effect}_amount'] > new_sources["fence"]:
-            new_sources["castle"] -= (card_data[f'{effect}_amount'] - new_sources["fence"])
-            new_sources["fence"] = 0
-
-        else:
-            new_sources["fence"] -= card_data[f'{effect}_amount']
-
-    else:
-        new_sources[card_data[f'{effect}_unit']] += card_data[f'{effect}_amount']
-
-    return {key: 0 if value < 0 else value for key, value in new_sources.items()}
+        case _:
+            raise CustomError(f'Unknown tablename {tablename}')
 
 
 def create_data_dict(obj, delete_id: bool = True):

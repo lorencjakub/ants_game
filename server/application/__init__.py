@@ -65,10 +65,10 @@ def create_app(with_secutiry: bool = True, with_sockets: bool = False) -> Union[
 def register_extensions(app: Flask) -> None:
     """Register Flask extensions."""
     db.init_app(app)
-    # db.session().expire_on_commit = False
 
     with app.app_context():
         if db.engine.url.drivername == 'sqlite':
+            db.session().expire_on_commit = False
             migrate.init_app(app, db, render_as_batch=True)
         else:
             migrate.init_app(app, db)

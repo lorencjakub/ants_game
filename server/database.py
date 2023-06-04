@@ -67,4 +67,3 @@ class PkModel(Model):
         ):
             return cls.query.get(int(record_id))
         return None
-

@@ -23,7 +23,7 @@
 		"price_unit": "weapons",
 		"price_amount": 12,
 		"enemy_lost_unit": "materials",
-		"enemy_lost_amount": 4,
+		"enemy_lost_amount": -4,
 		"count_in_deck": 8
 	},
 	{
@@ -79,7 +79,7 @@
 		"price_unit": "weapons",
 		"price_amount": 18,
 		"enemy_lost_unit": "castle",
-		"enemy_lost_amount": 10,
+		"enemy_lost_amount": -10,
 		"count_in_deck": 8
 	},
 	{

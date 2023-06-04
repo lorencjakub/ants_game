@@ -10,5 +10,3 @@ SQLALCHEMY_TRACK_MODIFICATIONS = True if os.environ.get("SQLALCHEMY_TRACK_MODIFI
 SQLALCHEMY_ECHO = True if os.environ.get("SQLALCHEMY_ECHO", default=True) == "True" else False
 FE_ORIGIN = os.environ.get("FE_ORIGIN")
 DB_DRIVERNAME = os.environ.get("DB_DRIVERNAME", default="sqlite")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", default="secret-key")
-OPENAI_ORGANIZATION_ID = os.environ.get("OPENAI_ORG_ID", default="org-id")
