@@ -31,10 +31,6 @@ def main_loop() -> Union[None, Flask]:
         if empty_db:
             from application.models import BuildingCards, SoldiersCards, MagicCards, Rooms
             initialize_db()
-        # else:
-        #     from application.models import BuildingCards, SoldiersCards, MagicCards, Rooms
-        #     os.remove(f'{os.getcwd()}/database.sqlite3')
-        #     initialize_db()
 
         os.system("flask db stamp head")
 
@@ -49,7 +45,7 @@ def main_loop() -> Union[None, Flask]:
         return app
 
     else:
-        socketio.run(app, debug=True, port=port, host=host, allow_unsafe_werkzeug=BE_ENV != "prod")
+        socketio.run(app, debug=True, port=port, host=host)
 
 
 if __name__ == "__main__":

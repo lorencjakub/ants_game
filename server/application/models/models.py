@@ -3,10 +3,8 @@ from database import db, PkModel
 from sqlalchemy.ext.hybrid import hybrid_property
 import enum
 import uuid
-from distinct_types import Union, List, Dict
-import random
+from distinct_types import Union
 from application.services.error_handlers import CustomError
-import time
 
 
 # ENUMS
@@ -38,7 +36,6 @@ class PlayersInRooms(db.Model):
 
     room = db.Column(db.Integer, db.ForeignKey("rooms.id"), primary_key=True)
     player = db.Column(db.Integer, db.ForeignKey("players.id"), primary_key=True)
-    populate = db.Column(db.Integer, nullable=False, default=1)
 
 
 class BuildingCardsInDeck(db.Model):
@@ -95,8 +92,6 @@ class Card(PkModel):
     __abstract__ = True
 
     id = db.Column(db.Integer, primary_key=True)
-    en_name = db.Column(db.String(20), nullable=False, default="")
-    cs_name = db.Column(db.String(20), nullable=False, default="")
     price_amount = db.Column(db.Integer, db.CheckConstraint('price_amount >= 0 AND price_amount <= 39'), nullable=False,
                              default=0)
     bonus_unit = db.Column(db.Enum(SourcesChoices), default=SourcesChoices.none, nullable=False)
@@ -117,7 +112,7 @@ class BuildingCards(Card):
     __tablename__ = "building_cards"
 
     price_unit = db.Column(db.Enum(UnitChoices), default=UnitChoices.bricks, nullable=False)
-    color = db.Column(db.String(5), nullable=False, default="red")
+    type = db.Column(db.String, nullable=False, default="building")
 
     def __str__(self) -> str:
         return "<Building card {item_name} ID {id}>".format(item_name=self.item_name, id=self.id)
@@ -130,7 +125,7 @@ class SoldiersCards(Card):
     __tablename__ = "soldiers_cards"
 
     price_unit = db.Column(db.Enum(UnitChoices), default=UnitChoices.weapons, nullable=False)
-    color = db.Column(db.String(5), nullable=False, default="green")
+    type = db.Column(db.String, nullable=False, default="soldiers")
 
     def __str__(self) -> str:
         return "<Soldiers card {item_name} ID {id}>".format(item_name=self.item_name, id=self.id)
@@ -143,7 +138,7 @@ class MagicCards(Card):
     __tablename__ = "magic_cards"
 
     price_unit = db.Column(db.Enum(UnitChoices), default=UnitChoices.crystals, nullable=False)
-    color = db.Column(db.String(5), nullable=False, default="blue")
+    type = db.Column(db.String, nullable=False, default="magic")
 
     def __str__(self) -> str:
         return "<Magic card {item_name} ID {id}>".format(item_name=self.item_name, id=self.id)
@@ -183,7 +178,13 @@ class Players(PkModel):
 
         for cards in [self.building_cards, self.soldiers_cards, self.magic_cards]:
             if len(cards) != 0:
-                cards_in_deck.extend(cards)
+                for c in cards:
+                    player_card_table = get_table_by_tablename(f'player_{c.__tablename__}')
+                    association = player_card_table.query.filter_by(card=c.id, player=self.id).first()
+
+                    if association:
+                        for _ in range(0, association.count):
+                            cards_in_deck.append(c)
 
         return cards_in_deck
 
@@ -243,8 +244,8 @@ class Rooms(PkModel):
             id=self.id, players=self.players, player_on_turn=self.player_on_turn)
 
     @classmethod
-    def create(cls):
-        return super().create(guid=str(uuid.uuid4().hex))
+    def create(cls, **kwargs):
+        return super().create(**kwargs, guid=str(uuid.uuid4().hex))
 
     @hybrid_property
     def cards_in_deck(self):
@@ -257,8 +258,8 @@ class Rooms(PkModel):
         return cards_in_deck
 
     def switch_turn(self):
-        player_on_turn = 1 + (self.player_on_turn == 1)
-        return self.update(True, player_on_turn=player_on_turn)
+        new_player_on_turn = next((p for p in self.players if p.id != self.player_on_turn), None)
+        return self.update(True, player_on_turn=new_player_on_turn.id)
 
     def add_player(self, p: Players):
         if len(self.players) == 2:
@@ -299,7 +300,7 @@ class Rooms(PkModel):
         db.session.commit()
 
     def get_enemy(self, player) -> Players:
-        return [p for p in self.players if p.id != player.id][0]
+        return next((p for p in self.players if p.id != player.id), None)
 
 
 class Sources(PkModel):

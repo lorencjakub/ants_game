@@ -30,29 +30,18 @@ def init_cards():
         building_cards = json.load(b)
 
         for bc in building_cards:
-            BuildingCards.create(**create_item_name(bc))
+            BuildingCards.create(**bc)
 
     with open(f'{os.getcwd()}/config/soldiers_cards.json', encoding='utf-8') as s:
         soldiers_cards = json.load(s)
 
         for sc in soldiers_cards:
-            SoldiersCards.create(**create_item_name(sc))
+            SoldiersCards.create(**sc)
 
     with open(f'{os.getcwd()}/config/magic_cards.json', encoding='utf-8') as m:
         magic_cards = json.load(m)
 
         for mc in magic_cards:
-            MagicCards.create(**create_item_name(mc))
+            MagicCards.create(**mc)
 
     db.session.commit()
-
-
-def create_item_name(data):
-    en_name = data.get("en_name")
-
-    if not en_name:
-        raise Exception("English version of card name has not been found")
-
-    data["item_name"] = data["en_name"].lower()
-
-    return data

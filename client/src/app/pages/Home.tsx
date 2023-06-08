@@ -8,12 +8,36 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { useTheme as useMuiTheme } from "@mui/material/styles"
 import { useIntl } from "react-intl"
+import { useQuery } from '@tanstack/react-query'
+import ApiClient from '../../base/utils/Axios/ApiClient'
+import { IRoomInfoResponse } from '../../base/utils/Axios/types'
+import { AxiosError } from 'axios'
+import Loading from '../../base/components/Loading'
+import { ICard } from '../../base/utils/Axios/types'
+import { usePlayerCards } from '../Providers/PlayerCards'
 
 
 const HomePage: FC<{}> = () => {
     const navigate = useNavigate()
     const theme = useMuiTheme()
     const intl = useIntl()
+    const { setPlayerCards = (data: ICard[]) => {} } = usePlayerCards()
+
+    const {
+        refetch: createRoom,
+        isFetching: creatingRoom
+    } = useQuery<IRoomInfoResponse, AxiosError>(
+        ["join_room_query"],
+        async () => await ApiClient.createRoom(),
+        {
+            enabled: false,
+            onSuccess: (res) => {
+                sessionStorage.setItem("Token", res.token)
+                setPlayerCards(res.cards)
+                navigate(`/room/${res.room}`)
+            }
+        }
+    )
 
     return (
         <Paper
@@ -73,7 +97,7 @@ const HomePage: FC<{}> = () => {
                         variant="body1"
                         color="text.secondary"
                     >
-                        {intl.formatMessage({ id: "pages.homepage.about", defaultMessage: "This is the online version of a czech freeware game Ants made by Ing. Miroslav Němeček" })}
+                        {intl.formatMessage({ id: "pages.homepage.about", defaultMessage: "This is the online version of a czech freeware game Ants" })}
                     </Typography>
                 </Grid>
                 <Grid
@@ -85,7 +109,7 @@ const HomePage: FC<{}> = () => {
                     }}
                 >
                     <Button
-                        onClick={() => navigate("/create_room")}
+                        onClick={() => createRoom()}
                         variant="contained"
                         sx={{
                             backgroundColor: theme.palette.text.primary,
@@ -96,6 +120,16 @@ const HomePage: FC<{}> = () => {
                     </Button>
                 </Grid>
             </Grid>
+            {(!creatingRoom) ? null :
+                <Loading
+                    message={intl.formatMessage({ id: "processing_backdrop_message.creating_room", defaultMessage: "Room is creating..." })}
+                    sx={{
+                        backgroundColor: "background.default",
+                        opacity: 0,
+                        zIndex: 5
+                    }}
+                />
+            }
         </Paper>
     )
 }

@@ -1,36 +1,39 @@
-interface INutrientData {
+export interface IRoomInfoResponse {
+    room: string,
+    token: string,
+    cards: ICard[]
+}
+
+export interface ICard {
+    unit?: "bricks" | "weapons" | "crystals",
+    price?: number,
+    item_name?: string,
+    cardName?: string,
+    message?: string | JSX.Element,
+    type?: "building" | "soldiers" | "magic" | "deck"
+}
+
+export interface ISources {
+    bricks: number,
+    weapons: number,
+    crystals: number,
+    builders: number,
+    soldiers: number,
+    mages: number,
+    fence: number,
+    castle: number
+}
+
+export interface ITurnResponse {
+    cards: ICard[],
+    discarder: ICard,
+    state: {
+        [token: string]: ISources
+    }
+}
+
+export interface IPlayerSourceState {
+    name: string,
     amount: number,
-    ratio: number
-}
-
-export interface INutrients {
-    carbs: INutrientData,
-    energy: INutrientData,
-    fats: INutrientData,
-    fiber: INutrientData,
-    proteins: INutrientData
-}
-
-export interface IFood {
-    id: number,
-    recipe_id?: number,
-    cs_name: string,
-    en_name?: string,
-    de_name?: string,
-    portions: number,
-    cs_url: string,
-    en_url?: string,
-    de_url?: string,
-    nutrients?: INutrients
-}
-
-export interface IDailyMenu {
-    foods: {
-        breakfast: IFood,
-        lunch: IFood,
-        snack?: IFood,
-        dinner: IFood
-    },
-    iterations: number,
-    nutrients: INutrients
+    unit: string
 }

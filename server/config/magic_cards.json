@@ -1,7 +1,6 @@
 [
 	{
-		"en_name": "Conjure bricks",
-		"cs_name": "Čaruj cihly",
+		"item_name": "conjure_bricks",
 		"price_unit": "crystals",
 		"price_amount": 4,
 		"bonus_unit": "bricks",
@@ -9,17 +8,15 @@
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Crush bricks",
-		"cs_name": "Znič cihly",
+		"item_name": "crush_bricks",
 		"price_unit": "crystals",
 		"price_amount": 4,
 		"enemy_lost_unit": "bricks",
-		"enemy_lost_amount": 8,
+		"enemy_lost_amount": -8,
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Conjure crystals",
-		"cs_name": "Čaruj krystaly",
+		"item_name": "conjure_crystals",
 		"price_unit": "crystals",
 		"price_amount": 4,
 		"bonus_unit": "crystals",
@@ -27,17 +24,15 @@
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Crush crystals",
-		"cs_name": "Znič krystaly",
+		"item_name": "crush_crystals",
 		"price_unit": "crystals",
 		"price_amount": 4,
 		"enemy_lost_unit": "crystals",
-		"enemy_lost_amount": 8,
+		"enemy_lost_amount": -8,
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Conjure weapons",
-		"cs_name": "Čaruj zbraně",
+		"item_name": "conjure_weapons",
 		"price_unit": "crystals",
 		"price_amount": 4,
 		"bonus_unit": "weapons",
@@ -45,17 +40,15 @@
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Crush weapons",
-		"cs_name": "Znič zbraně",
+		"item_name": "crush_weapons",
 		"price_unit": "crystals",
 		"price_amount": 4,
 		"enemy_lost_unit": "weapons",
-		"enemy_lost_amount": 8,
+		"enemy_lost_amount": -8,
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Dragon",
-		"cs_name": "Drak",
+		"item_name": "dragon",
 		"price_unit": "crystals",
 		"price_amount": 25,
 		"enemy_lost_unit": "attack",
@@ -63,8 +56,7 @@
 		"count_in_deck": 6
 	},
 	{
-		"en_name": "Sorcerer",
-		"cs_name": "Čaroděj",
+		"item_name": "sorcerer",
 		"price_unit": "crystals",
 		"price_amount": 8,
 		"bonus_unit": "mages",
@@ -72,8 +64,7 @@
 		"count_in_deck": 8
 	},
 	{
-		"en_name": "Pixies",
-		"cs_name": "Skřítci",
+		"item_name": "pixies",
 		"price_unit": "crystals",
 		"price_amount": 22,
 		"bonus_unit": "castle",
@@ -81,8 +72,7 @@
 		"count_in_deck": 6
 	},
 	{
-		"en_name": "Curse",
-		"cs_name": "Kletba",
+		"item_name": "curse",
 		"price_unit": "crystals",
 		"price_amount": 25,
 		"enemy_lost_unit": "all",

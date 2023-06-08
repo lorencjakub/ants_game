@@ -27,7 +27,7 @@ def create_app(with_secutiry: bool = True, with_sockets: bool = False) -> Union[
     fe_origin = "*"
 
     if with_secutiry:
-        fe_origin = os.environ.get("FE_ORIGIN", default="http://localhost:3000")
+        fe_origin = os.environ.get("FE_ORIGIN", default="http://127.0.0.1:3000")
 
         if fe_origin:
             try:

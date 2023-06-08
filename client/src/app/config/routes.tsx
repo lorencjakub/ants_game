@@ -2,7 +2,7 @@ import React, { lazy } from "react"
 
 
 const HomePage = lazy(() => import("../pages/Home"))
-const DailyMenuPage = lazy(() => import("../pages/DailyMenu"))
+const Room = lazy(() => import("../pages/Room"))
 
 const routes = [
     {
@@ -10,8 +10,8 @@ const routes = [
         element: <HomePage />,
     },
     {
-        path: "/menu",
-        element: <DailyMenuPage />,
+        path: "/room/:guid",
+        element: <Room />,
     }
 ]
 

@@ -1,8 +1,8 @@
 import { useContext } from "react"
 import Context from "./Context"
-export { default as DailyMenuProvider } from "./Provider"
+export { default as PlayerCardsProvider } from "./Provider"
 
 
-export function useDailyMenu() {
+export function usePlayerCards() {
     return useContext(Context)
 }

@@ -18,11 +18,12 @@ import {
     CssBaseline
 } from "@mui/material"
 import { ErrorProvider } from "../Providers/Errors"
+import { PlayerCardsProvider } from "../../app/Providers"
 
 
 const Layout = lazy(() => import("./Layout"))
 const cache = createCache({
-    key: "nutri-react-cache-key",
+    key: "ants-cache-key",
     nonce: process.env.NONCE || "rAnd0mNonce",
     prepend: true
 })
@@ -53,21 +54,23 @@ const AppContainer: FC<{}> = () => {
                     <ErrorProvider>
                         <NotistackProvider>
                             <QueryClientProvider>
-                                <Suspense fallback={
-                                    <div
-                                        style={{
-                                            width: "100%",
-                                            height: "100vh",
-                                            display: "flex",
-                                            justifyItems: "center",
-                                            alignItems: "center"
-                                        }}
-                                    >
-                                        <Loading />
-                                    </div>
-                                }>
-                                    {<Layout />}
-                                </Suspense>
+                                <PlayerCardsProvider>
+                                    <Suspense fallback={
+                                        <div
+                                            style={{
+                                                width: "100%",
+                                                height: "100vh",
+                                                display: "flex",
+                                                justifyItems: "center",
+                                                alignItems: "center"
+                                            }}
+                                        >
+                                            <Loading />
+                                        </div>
+                                    }>
+                                        {<Layout />}
+                                    </Suspense>
+                                </PlayerCardsProvider>
                             </QueryClientProvider>
                         </NotistackProvider>
                     </ErrorProvider>

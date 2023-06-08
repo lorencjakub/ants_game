@@ -1,6 +1,6 @@
 import React from "react"
 import { render, screen, act, fireEvent, waitFor } from "../testSetup"
-import DialyMenuPage from "../../app/pages/DailyMenu"
+import DialyMenuPage from "../../app/pages/Room"
 import { messagesGetter } from "../../base/Providers/Locales/Provider"
 import LocaleComponent from "../LocaleTestComponent"
 import ApiClient from "../../base/utils/Axios/ApiClient"

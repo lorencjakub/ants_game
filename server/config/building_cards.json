@@ -1,7 +1,6 @@
 [
 	{
-		"en_name": "Wall",
-		"cs_name": "Zeď",
+		"item_name": "wall",
 		"price_unit": "bricks",
 		"price_amount": 1,
 		"bonus_unit": "fence",
@@ -9,8 +8,7 @@
 		"count_in_deck": 24
 	},
 	{
-		"en_name": "Base",
-		"cs_name": "Základy",
+		"item_name": "base",
 		"price_unit": "bricks",
 		"price_amount": 1,
 		"bonus_unit": "castle",
@@ -18,8 +16,7 @@
 		"count_in_deck": 24
 	},
 	{
-		"en_name": "School",
-		"cs_name": "Škola",
+		"item_name": "school",
 		"price_unit": "bricks",
 		"price_amount": 8,
 		"bonus_unit": "builders",
@@ -27,8 +24,7 @@
 		"count_in_deck": 8
 	},
 	{
-		"en_name": "Reserve",
-		"cs_name": "Rezervy",
+		"item_name": "reserve",
 		"price_unit": "bricks",
 		"price_amount": 2,
 		"bonus_unit": "castle",
@@ -36,8 +32,7 @@
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Fence",
-		"cs_name": "Hradba",
+		"item_name": "fence",
 		"price_unit": "bricks",
 		"price_amount": 12,
 		"bonus_unit": "fence",
@@ -45,8 +40,7 @@
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Wain",
-		"cs_name": "Povoz",
+		"item_name": "wain",
 		"price_unit": "bricks",
 		"price_amount": 10,
 		"bonus_unit": "castle",
@@ -56,8 +50,7 @@
 		"count_in_deck": 8
 	},
 	{
-		"en_name": "Tower",
-		"cs_name": "Věž",
+		"item_name": "tower",
 		"price_unit": "bricks",
 		"price_amount": 5,
 		"bonus_unit": "castle",
@@ -65,8 +58,7 @@
 		"count_in_deck": 12
 	},
 	{
-		"en_name": "Babel",
-		"cs_name": "Babylon",
+		"item_name": "babel",
 		"price_unit": "bricks",
 		"price_amount": 39,
 		"bonus_unit": "castle",
@@ -74,8 +66,7 @@
 		"count_in_deck": 4
 	},
 	{
-		"en_name": "Fort",
-		"cs_name": "Pevnost",
+		"item_name": "fort",
 		"price_unit": "bricks",
 		"price_amount": 18,
 		"bonus_unit": "castle",
@@ -83,8 +74,7 @@
 		"count_in_deck": 8
 	},
 	{
-		"en_name": "Defense",
-		"cs_name": "Obrana",
+		"item_name": "defense",
 		"price_unit": "bricks",
 		"price_amount": 3,
 		"bonus_unit": "fence",

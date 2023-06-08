@@ -8,7 +8,7 @@ def set_cors() -> CORSSettings:
     cors_settings = {
         "origins": ["*"],
         "methods": ["GET", "POST", "OPTIONS", "HEAD"],
-        "allow_headers": ["CorsTrigger", "Content-Type"]
+        "allow_headers": ["CorsTrigger", "Content-Type", "Token"]
     }
 
     return cors_settings

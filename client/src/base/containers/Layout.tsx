@@ -16,20 +16,22 @@ const Layout: FC<{}> = () => {
                 <Route
                     path="*"
                     element={
-                        <Suspense fallback={
-                            <div
-                                style={{
-                                    width: "100%",
-                                    height: "100vh",
-                                    display: "flex",
-                                    justifyItems: "center",
-                                    alignItems: "center"
-                                }}
-                            >
-                                <Loading />
-                            </div>
-                        }>
-                            {<Page />}
+                        <Suspense
+                            fallback={
+                                <div
+                                    style={{
+                                        width: "100%",
+                                        height: "100vh",
+                                        display: "flex",
+                                        justifyItems: "center",
+                                        alignItems: "center"
+                                    }}
+                                >
+                                    <Loading />
+                                </div>
+                            }
+                        >
+                            <Page />
                         </Suspense>
                     }
                 />
