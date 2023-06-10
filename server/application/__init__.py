@@ -9,13 +9,13 @@ from .services.error_handlers import register_app_error_handlers
 
 import os
 import json
-from distinct_types import Union, Tuple
+from distinct_types import Tuple
 
 BE_ENV = os.environ.get("BE_ENV")
 socketio = SocketIO()
 
 
-def create_app(with_secutiry: bool = True, with_sockets: bool = False) -> Union[Flask, Tuple[Flask, SocketIO]]:
+def create_app(with_secutiry: bool = True, with_sockets: bool = False) -> Flask | Tuple[Flask, SocketIO]:
     """Create application factory
     """
     config_object = f'config_{BE_ENV if BE_ENV is not None else "dev"}'

@@ -1,10 +1,10 @@
-from distinct_types import CORSSettings, SecuritySettings
+from distinct_types import Dict, List
 import os
 
 BE_ENV = os.environ.get("BE_ENV")
 
 
-def set_cors() -> CORSSettings:
+def set_cors() -> Dict[str, List[str]]:
     cors_settings = {
         "origins": ["*"],
         "methods": ["GET", "POST", "OPTIONS", "HEAD"],
@@ -14,7 +14,7 @@ def set_cors() -> CORSSettings:
     return cors_settings
 
 
-def set_security_headers() -> SecuritySettings:
+def set_security_headers() -> Dict[str, bool | str | Dict[str, str]]:
     security_headers = {
         "permissions_policy": {
             "camera": "'none'",

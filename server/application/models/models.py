@@ -3,7 +3,6 @@ from database import db, PkModel
 from sqlalchemy.ext.hybrid import hybrid_property
 import enum
 import uuid
-from distinct_types import Union
 from application.services.error_handlers import CustomError
 
 
@@ -157,7 +156,7 @@ class Players(PkModel):
     soldiers_cards = db.relationship("SoldiersCards", secondary="player_soldiers_cards")
     magic_cards = db.relationship("MagicCards", secondary="player_magic_cards")
     is_host = db.Column(db.Boolean, default=False)
-    token = db.Column(db.String(32), nullable=False, default="PlayerToken")
+    token = db.Column(db.String(32), nullable=False, default="PlayerToken", unique=True)
     sources_id = db.Column(db.ForeignKey("sources.id"))
     sources = db.relationship("Sources")
 
@@ -169,7 +168,9 @@ class Players(PkModel):
 
     @classmethod
     def create(cls, **kwargs):
-        kwargs["token"] = str(uuid.uuid4().hex)
+        if not kwargs.get("token"):
+            kwargs["token"] = str(uuid.uuid4().hex)
+
         return super().create(**kwargs)
 
     @hybrid_property
@@ -183,12 +184,12 @@ class Players(PkModel):
                     association = player_card_table.query.filter_by(card=c.id, player=self.id).first()
 
                     if association:
-                        for _ in range(0, association.count):
+                        for _ in range(association.count):
                             cards_in_deck.append(c)
 
         return cards_in_deck
 
-    def add_card(self, card: Union[BuildingCards, SoldiersCards, MagicCards]):
+    def add_card(self, card: BuildingCards | SoldiersCards | MagicCards):
         model = get_table_by_tablename(f'player_{card.__tablename__}')
         association = model.query.filter_by(card=card.id, player=self.id).first()
 
@@ -197,11 +198,11 @@ class Players(PkModel):
             db.session.add(association)
             return db.session.commit()
 
-        hand = mutate_db_object({
+        hand = {
             "building_cards": self.building_cards,
             "soldiers_cards": self.soldiers_cards,
             "magic_cards": self.magic_cards
-        })
+        }
 
         hand[card.__tablename__].append(card)
 
@@ -220,7 +221,7 @@ class Rooms(PkModel):
     __tablename__ = "rooms"
 
     id = db.Column(db.Integer, primary_key=True)
-    guid = db.Column(db.String(32), nullable=False)
+    guid = db.Column(db.String(32), nullable=False, unique=True)
     building_cards_in_deck = db.relationship("BuildingCards", secondary="building_cards_in_deck")
     soldiers_cards_in_deck = db.relationship("SoldiersCards", secondary="soldiers_cards_in_deck")
     magic_cards_in_deck = db.relationship("MagicCards", secondary="magic_cards_in_deck")
@@ -245,19 +246,30 @@ class Rooms(PkModel):
 
     @classmethod
     def create(cls, **kwargs):
-        return super().create(**kwargs, guid=str(uuid.uuid4().hex))
+        if not kwargs.get("guid"):
+            kwargs["guid"] = str(uuid.uuid4().hex)
+
+        return super().create(**kwargs)
 
     @hybrid_property
     def cards_in_deck(self):
         cards_in_deck = []
 
         for cards in [self.building_cards_in_deck, self.soldiers_cards_in_deck, self.magic_cards_in_deck]:
-            if len(cards) != 0:
-                cards_in_deck.extend(cards)
+            if cards and len(cards) != 0:
+                for c in cards:
+                    table = get_table_by_tablename(f'{c.__tablename__}_in_deck')
+                    association = table.query.filter_by(card=c.id, room=self.id).first()
+
+                    if association and association.count != 0:
+                        cards_in_deck.append(c)
 
         return cards_in_deck
 
     def switch_turn(self):
+        if len(self.players) != 2:
+            raise CustomError("Room is not full")
+
         new_player_on_turn = next((p for p in self.players if p.id != self.player_on_turn), None)
         return self.update(True, player_on_turn=new_player_on_turn.id)
 
@@ -332,21 +344,6 @@ class Sources(PkModel):
 
 
 # FUNCTIONS
-def mutate_db_object(obj):
-    if isinstance(obj, list):
-        res = []
-        res.extend(obj)
-        return res
-
-    elif isinstance(obj, dict):
-        res = {}
-        res.update(obj)
-        return res
-
-    else:
-        return obj
-
-
 def get_table_by_tablename(tablename: str):
     match tablename:
         case "players_in_rooms":
@@ -385,13 +382,15 @@ def get_table_by_tablename(tablename: str):
         case "players":
             return Players
 
+        case "sources":
+            return Sources
+
         case _:
             raise CustomError(f'Unknown tablename {tablename}')
 
 
 def create_data_dict(obj, delete_id: bool = True):
-    obj_id = obj.id
-    obj_dict = {}
+    obj_dict = {"id": obj.id}
     obj_dict.update(obj.__dict__)
 
     try:

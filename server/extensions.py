@@ -43,5 +43,3 @@ def init_cards():
 
         for mc in magic_cards:
             MagicCards.create(**mc)
-
-    db.session.commit()

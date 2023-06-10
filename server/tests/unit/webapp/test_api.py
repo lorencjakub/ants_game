@@ -1,50 +1,16 @@
-from tests.unit import test_client, test_app
-from unittest.mock import patch
-from application.models import CsNutriRecipes
-from application.services.MenuGenerator import Menu
-from tests.unit.webapp.mocking import mock_get_menu, mock_get_recipe
+from tests.unit import test_client
+from tests.unit.webapp.mocking import MOCKED_INIT_ROOM, MOCKED_DISCARD_RESPONSE, MOCKED_STATE_AFTER_TURN,\
+    MOCKED_DB_QUERY
+from unittest.mock import patch, Mock
 import os
-import json
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
-MOCKED_MENU_SUCCESS = mock_get_menu(True)
-MOCKED_MENU_NONE = mock_get_menu()
-MOCKED_RECIPE = mock_get_recipe()
-
-DEFAULT_MENU_BODY = {
-    "energy": 2000,
-    "minimum_energy_check": False,
-    "carbs": 40,
-    "proteins": 40,
-    "fats": 20,
-    "with_snack": True,
-    "breakfast_tags": [],
-    "lunch_tags": [],
-    "snack_tags": [],
-    "dinner_tags": [],
-    "iterations": 300
-}
-
-BASIC_SUCCESS_NEW_MENU_BODY = {
-    "energy": 2000,
-    "minimum_energy_check": False,
-    "carbs": 40,
-    "proteins": 40,
-    "fats": 20,
-    "with_snack": True,
-    "breakfast_tags": ["1"],
-    "lunch_tags": [],
-    "snack_tags": [],
-    "dinner_tags": [],
-    "iterations": 300
-}
-
 
 def test_001_security_headers() -> None:
-    with patch("api.routes.menu_generator.get_recipe", return_value=None):
+    with patch("application.main.routes.join_room", side_effect=lambda x: None):
         from tests.unit.CustomTestCase import CustomTestCase
         from flask_cors import CORS
         from utils.SecurityManager import SecurityHeaderManager
@@ -66,7 +32,7 @@ def test_001_security_headers() -> None:
         SecurityHeaderManager(app, **security_headers)
         test_client = app.test_client()
 
-        response = test_client.get('/menu/1')
+        response = test_client.get("/create_room")
         case.tearDown()
 
         assert response.access_control_allow_headers is None
@@ -100,145 +66,120 @@ def test_001_security_headers() -> None:
         ])
 
 
-def test_002_get_random_menu_success(test_client) -> None:
-    with patch("api.routes.menu_generator.generate_random_menu", return_value=mock_get_menu(True)):
-        response = test_client.get('/random_menu')
-
+def test_002_routes_create_room_success(test_client) -> None:
+    with patch("application.main.routes.init_room", side_effect=lambda: MOCKED_INIT_ROOM):
+        response = test_client.get('/create_room')
         assert response.status_code == 200
-        assert {}.update(response.json) == {}.update(MOCKED_MENU_SUCCESS)
+        assert response.json == MOCKED_INIT_ROOM
 
 
-def test_003_get_random_menu_none(test_client) -> None:
-    with patch("api.routes.menu_generator.generate_random_menu", return_value=mock_get_menu(None)):
-        response = test_client.get('/random_menu')
-
+def test_003_routes_create_room_fail(test_client) -> None:
+    with patch("application.main.routes.init_room", side_effect=Exception("MockedException")):
+        response = test_client.get('/create_room')
         assert response.status_code == 400
-        assert json.loads(response.data) == {"message": "no_menu"}
 
 
-def test_004_get_random_menu_fail(test_client) -> None:
-    with patch("api.routes.menu_generator.generate_random_menu", return_value=mock_get_menu(False)):
-        response = test_client.get('/random_menu')
-
-        assert response.status_code == 400
-        assert json.loads(response.data) == {"message": "wrong_menu_inputs"}
-
-
-def test_005_get_recipe_success(test_client) -> None:
-    with patch("api.routes.menu_generator.get_recipe", return_value=mock_get_recipe()):
-        response = test_client.get('/menu/1')
-
+def test_004_routes_join_room_success(test_client) -> None:
+    with patch("application.main.routes.player_join_room_or_get_data", side_effect=lambda *args: MOCKED_INIT_ROOM):
+        response = test_client.get('/join_room/TestRoom')
         assert response.status_code == 200
-        assert response.json == MOCKED_RECIPE
+        assert response.json == MOCKED_INIT_ROOM
 
 
-def test_006_get_recipe_fail(test_client) -> None:
-    with patch("api.routes.menu_generator.get_recipe", return_value=None):
-        response = test_client.get('/menu/1')
-
+def test_005_routes_join_room_fail(test_client) -> None:
+    with patch("application.main.routes.player_join_room_or_get_data", side_effect=Exception("MockedException")):
+        response = test_client.get('/join_room/TestRoom')
         assert response.status_code == 400
-        assert json.loads(response.data) == {"message": "recipe_not_found"}
 
 
-def test_007_get_menu_success(test_client) -> None:
-    with patch("api.routes.menu_generator.generate_menu", return_value=mock_get_menu(True)):
-        response = test_client.post('/menu', json=DEFAULT_MENU_BODY)
-
-        assert response.status_code == 200
-        assert response.json == MOCKED_MENU_SUCCESS
-
-
-def test_008_get_menu_none(test_client) -> None:
-    with patch("api.routes.menu_generator.generate_menu", return_value=mock_get_menu(None)):
-        response = test_client.post('/menu', json=DEFAULT_MENU_BODY)
-
-        assert response.status_code == 400
-        assert json.loads(response.data) == {"message": "no_menu"}
-
-
-def test_009_get_menu_fail(test_client) -> None:
-    with patch("api.routes.menu_generator.generate_menu", return_value=mock_get_menu(False)):
-        response = test_client.post('/menu', json=DEFAULT_MENU_BODY)
-
-        assert response.status_code == 400
-        assert json.loads(response.data) == {"message": "wrong_menu_inputs"}
-
-
-def test_010_get_menu_with_tag_2_fail(test_client) -> None:
-    tagged_menu_body = dict(DEFAULT_MENU_BODY)
-    tagged_menu_body["breakfast_tags"] = ["2"]
-
-    response = test_client.post('/menu', json=tagged_menu_body)
-
-    assert response.status_code == 400
-    assert json.loads(response.data) == {"message": "no_menu"}
-
-
-def test_011_get_menu_with_tag_2_without_min_energy_success(test_client) -> None:
-    tagged_menu_body = dict(DEFAULT_MENU_BODY)
-    tagged_menu_body["breakfast_tags"] = ["2"]
-    tagged_menu_body["minimum_energy_check"] = True
-    tagged_menu_body["carbs"] = 47
-    tagged_menu_body["proteins"] = 32
-    tagged_menu_body["fats"] = 21
-
-    expected_data = {
-        "cs_name": "Test breakfast2 cs",
-        "cs_url": "Test breakfast2 URL cs",
-        "de_name": "Test breakfast2 de",
-        "de_url": "Test breakfast2 URL de",
-        "en_name": "Test breakfast2 en",
-        "en_url": "Test breakfast2 URL en",
-        "id": 4,
-        "portions": 4,
-        "recipe_id": 4
-    }
-
-    response = test_client.post('/menu', json=tagged_menu_body)
-
-    assert response.status_code == 200
-    assert json.loads(response.data)["foods"]["breakfast"] == expected_data
-
-
-def test_012_get_menu_without_snack_fail(test_client) -> None:
-    tagged_menu_body = dict(BASIC_SUCCESS_NEW_MENU_BODY)
-    tagged_menu_body["with_snack"] = False
-    tagged_menu_body["minimum_energy_check"] = True
-
-    response = test_client.post('/menu', json=tagged_menu_body)
-
-    assert response.status_code == 400
-    assert json.loads(response.data) == {"message": "no_menu"}
-
-
-def test_013_get_menu_without_snack_without_min_energy_success(test_client) -> None:
-    tagged_menu_body = dict(BASIC_SUCCESS_NEW_MENU_BODY)
-    tagged_menu_body["with_snack"] = False
-    tagged_menu_body["carbs"] = 46
-    tagged_menu_body["proteins"] = 36
-    tagged_menu_body["fats"] = 18
-
-    expected_data = mock_get_menu(True, False)
-
-    response = test_client.post('/menu', json=tagged_menu_body)
-
-    assert response.status_code == 200
-    assert response.json == expected_data
-
-
-def test_014_get_meal_success(test_app) -> None:
-    with test_app.app_context():
-        with patch.object(Menu, "_Menu__query_tagged_data", return_value=[CsNutriRecipes.query.get(1)]):
-            tagged_menu_body = {
-                "meal_ids": [2, 3, 2],
-                "meal_to_reload": "breakfast",
-                "menu_data": DEFAULT_MENU_BODY
-            }
-
-            expected_data = mock_get_menu(True)
-            expected_data["foods"] = {"breakfast": expected_data["foods"]["breakfast"]}
-
-            response = test_app.test_client().post('/reload_meal', json=tagged_menu_body)
-
+def test_006_routes_leave_room_success(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.main.routes.player_leave_room", side_effect=lambda x: {}):
+            response = test_client.get('/leave_room')
             assert response.status_code == 200
-            assert response.json == expected_data
+            assert response.json == {}
+
+
+def test_007_routes_leave_room_fail(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.services.functions.get_saved_player", side_effect=lambda x: Mock(
+                get_player_room=Mock(side_effect=lambda: None))
+        ):
+            response = test_client.get('/leave_room')
+            assert response.status_code == 400
+            assert response.data.decode() == "Invalid room"
+
+
+def test_008_routes_discard_success(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.main.routes.discard_card", side_effect=lambda x: MOCKED_DISCARD_RESPONSE):
+            response = test_client.post('/discard', json={"card_name": "TestCard"})
+            assert response.status_code == 200
+            assert response.json == MOCKED_DISCARD_RESPONSE
+
+
+def test_009_routes_discard_fail(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        response = test_client.post('/discard', json={})
+        assert response.status_code == 400
+        assert response.data.decode() == "Missing card"
+
+
+def test_0010_routes_play_card_success(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.main.routes.use_card_from_hand", side_effect=lambda x: MOCKED_STATE_AFTER_TURN):
+            response = test_client.post('/play_card', json={"card_name": "TestCard"})
+            assert response.status_code == 200
+            assert response.json == MOCKED_STATE_AFTER_TURN
+
+
+def test_0011_routes_play_card_win(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.main.routes.use_card_from_hand", side_effect=lambda x: {"winner": "Player1"}):
+            response = test_client.post('/play_card', json={"card_name": "TestCard"})
+            assert response.status_code == 200
+            assert response.json == {"winner": "Player1"}
+
+
+def test_012_routes_play_card_fail(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.services.functions.get_saved_player", side_effect=lambda x: Mock(
+                get_player_room=Mock(side_effect=lambda: None))
+        ):
+            response = test_client.post('/play_card', json={})
+            assert response.status_code == 400
+            assert response.data.decode() == "Missing card"
+
+
+def test_013_routes_lock_room_success(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.main.routes.deactivate_room", side_effect=lambda *args: {}):
+            response = test_client.get('/lock_room/TestRoom')
+            assert response.status_code == 200
+            assert response.json == {}
+
+
+def test_014_routes_lock_room_fail_invalid_room(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.services.functions.get_saved_player", side_effect=lambda x: Mock(is_host=False)):
+            response = test_client.get('/lock_room/TestRoom')
+            assert response.status_code == 400
+            assert response.data.decode() == "Invalid room"
+
+
+def test_015_routes_lock_room_fail_non_host(test_client) -> None:
+    with patch("application.main.routes.check_room", side_effect=lambda x: None):
+        with patch("application.services.functions.Rooms", return_value=MOCKED_DB_QUERY):
+            with patch("application.services.functions.get_saved_player", side_effect=lambda x: Mock(is_host=False)):
+                response = test_client.get('/lock_room/TestRoom')
+                assert response.status_code == 400
+                assert response.data.decode() == "Only host player is able to deactivate room"
+
+
+def test_016_routes_check_locked_room(test_client) -> None:
+    with patch("application.services.functions.get_saved_player", side_effect=lambda x: Mock(
+        get_player_room=Mock(side_effect=lambda: Mock(active=False)))
+    ):
+        response = test_client.get('/lock_room/TestRoom')
+        assert response.status_code == 400
+        assert response.data.decode() == "Room is not active anymore"

@@ -4,7 +4,7 @@ Začíná se s mravenci 2 a suroviny 5, hrad 30, hradba 10
 Zeď: hradba +3 (1 cihly)
 Základy: hrad +2 (1 cihly)
 Škola: stavitelé +1 (8 cihly)
-Rezervy: hrad +8, hradba -4 (2 cihly)
+Rezervy: hrad +8, hradba -4 (3 cihly)
 Hradba: hradba +22 (12 cihly)
 Povoz: hrad +8, hrad soupeře -4 (10 cihly)
 Věž: hrad +5 (5 cihly)

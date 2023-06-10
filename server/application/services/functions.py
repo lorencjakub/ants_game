@@ -1,10 +1,10 @@
 from flask import Request, Response, jsonify
 from extensions import db
 from application.models import Rooms, Players, BuildingCards, SoldiersCards, MagicCards, Sources,\
-    mutate_db_object, create_data_dict, get_table_by_tablename
+    create_data_dict, get_table_by_tablename
 from .auth import get_saved_player
 from .error_handlers import CustomError
-from distinct_types import Union, List, Dict
+from distinct_types import List, Dict
 import enum
 import random
 
@@ -44,7 +44,7 @@ def init_room():
     })
 
 
-def player_join_room(guid: str, request: Request):
+def player_join_room_or_get_data(guid: str, request: Request):
     room = Rooms.query.filter_by(guid=guid).first()
     if not room:
         raise CustomError("Invalid room")
@@ -118,18 +118,20 @@ def make_switch_turn(guid: str) -> Response:
 
 def draw_new_card(request: Request):
     player = get_saved_player(request)
-    new_player_card = draw_cards(player)
+    new_player_cards = draw_cards(player)
 
-    return jsonify({"new_cards": [c.item_name for c in new_player_card]})
+    return jsonify({"new_cards": [c.item_name for c in new_player_cards]})
 
 
-def draw_cards(player: Players, count: int = 1) -> List[Union[BuildingCards, SoldiersCards, MagicCards]]:
+def draw_cards(player: Players, count: int = 1) -> List[BuildingCards | SoldiersCards | MagicCards]:
     player_room = player.get_player_room()
-    deck = mutate_db_object(player_room.cards_in_deck)
     new_cards = []
 
-    for _ in range(0, count):
-        new_card = remove_card_from_deck({"room": player_room.id}, deck, lambda x: f'{x}_in_deck')
+    if len(player_room.cards_in_deck) == 0:
+        player_room.create_deck()
+
+    for _ in range(count):
+        new_card = remove_card_from_deck({"room": player_room.id}, player_room.cards_in_deck, lambda x: f'{x}_in_deck')
         new_cards.append(new_card)
         player.add_card(new_card)
 
@@ -139,11 +141,15 @@ def draw_cards(player: Players, count: int = 1) -> List[Union[BuildingCards, Sol
 def discard_card(request: Request):
     card_name = request.json.get("card_name")
     if not card_name:
-        raise CustomError("Player does not have this card in hand")
+        raise CustomError("Missing card")
 
     player = get_saved_player(request)
     card = next((c for c in player.cards if c.item_name == card_name), None)
-    remove_card(player, card_name)
+
+    if not card:
+        raise CustomError("Player does not have this card in hand")
+
+    remove_card_from_deck({"player": player.id}, [card], lambda x: f'player_{x}')
     draw_cards(player)
 
     make_switch_turn(player.get_player_room().guid)
@@ -166,22 +172,19 @@ def discard_card(request: Request):
     })
 
 
-def remove_card(player: Players, card_name: str):
-    card = next((c for c in player.cards if c.item_name == card_name), None)
-    if not card:
-        raise CustomError("Player does not have this card in hand")
-
-    return remove_card_from_deck({"player": player.id}, [card], lambda x: f'player_{x}')
-
-
-def use_card_from_hand(request: Request):
+def use_card_from_hand(request: Request) -> Response:
     current_player = get_saved_player(request)
     card_name = request.json.get("card_name")
 
     if not card_name:
+        raise CustomError("Missing card")
+
+    card = next((c for c in current_player.cards if c.item_name == card_name), None)
+
+    if not card:
         raise CustomError("Player does not have this card in hand")
 
-    new_state = play_card(card_name, current_player)
+    new_state = play_card(card, current_player)
     winner = None
 
     for p, state in new_state["state"].items():
@@ -194,7 +197,7 @@ def use_card_from_hand(request: Request):
         deactivate_room(current_player.get_player_room().guid, request, winner)
         return jsonify({"winner": winner})
 
-    remove_card(current_player, card_name)
+    remove_card_from_deck({"player": current_player.id}, [card], lambda x: f'player_{x}')
     draw_cards(current_player)
 
     new_state.update({
@@ -207,13 +210,18 @@ def use_card_from_hand(request: Request):
             } for c in current_player.cards
         ]
     })
+
     make_switch_turn(current_player.get_player_room().guid)
+
+    new_player_on_turn = current_player.get_player_room().get_enemy(current_player)
+    new_state["state"][new_player_on_turn.token] = create_data_dict(new_player_on_turn.sources)
 
     return jsonify(new_state)
 
 
-def play_card(card_name: str, player: Players):
-    card = next((c for c in player.cards if c.item_name == card_name), None)
+def play_card(card: BuildingCards | SoldiersCards | MagicCards, player: Players) -> \
+        Dict[str, Dict[str, str | int | Dict[str, int]] | List[Dict[str, str | int]]]:
+    card = next((c for c in player.cards if c.item_name == card.item_name), None)
     if not card:
         raise CustomError("Player does not have this card in hand")
 
@@ -232,7 +240,7 @@ def play_card(card_name: str, player: Players):
     
     card_data = create_data_dict(card)
 
-    if card_name == "thief":
+    if card.item_name == "thief":
         enemy_sources = create_data_dict(enemy.sources)
         if not enemy_sources:
             raise CustomError("Sources of enemy has not been found")
@@ -259,9 +267,9 @@ def play_card(card_name: str, player: Players):
 
 
 def remove_card_from_deck(
-        owner: Dict[str, str], deck: List[Union[BuildingCards, SoldiersCards, MagicCards]],
+        owner: Dict[str, str], deck: List[BuildingCards | SoldiersCards | MagicCards],
         target_table_name
-) -> Union[BuildingCards, SoldiersCards, MagicCards]:
+) -> BuildingCards | SoldiersCards | MagicCards:
     random_deck = []
     random_deck.extend(deck)
     random.shuffle(random_deck)
@@ -279,7 +287,7 @@ def remove_card_from_deck(
     return card
 
 
-def process_card_effects(new_sources, card_data, effect):
+def process_card_effects(new_sources, card_data, effect) -> Dict[str, int]:
     if card_data[f'{effect}_unit'] == "none":
         pass
 
@@ -316,7 +324,7 @@ def process_card_effects(new_sources, card_data, effect):
     return {key: 0 if value < 0 else value for key, value in new_sources.items()}
 
 
-def apply_cards_effect(player, card_data, apply_enemy_effects: bool = False):
+def apply_cards_effect(player, card_data, apply_enemy_effects: bool = False) -> Dict[str, int]:
     if not player.sources:
         raise CustomError("Player does not have any sources")
 
@@ -342,7 +350,7 @@ def deactivate_room(guid: str, request: Request, winner: str = None) -> Response
     if not room:
         raise CustomError("Invalid room")
 
-    if not player.is_host:
+    if not winner and not player.is_host:
         raise CustomError("Only host player is able to deactivate room")
 
     room.update(**{"active": False, "winner": winner} if winner else {"active": False})

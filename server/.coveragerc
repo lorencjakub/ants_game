@@ -7,6 +7,6 @@ omit =
     config_test.py
     distinct_types.py
     main_run.py
-    tests/unit/webapp//mocking.py
+    tests/unit/webapp/mocking.py
     api/models/models.py
     extensions.py

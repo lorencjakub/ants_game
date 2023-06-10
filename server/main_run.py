@@ -4,14 +4,12 @@ from application import create_app, socketio
 
 import os
 import sys
-import json
-from distinct_types import Union, List
 
 
 BE_ENV = os.environ.get("BE_ENV")
 
 
-def main_loop() -> Union[None, Flask]:
+def main_loop() -> None | Flask:
     host = None
     port = None
 
@@ -26,7 +24,8 @@ def main_loop() -> Union[None, Flask]:
     app = create_app(with_sockets=True)
 
     with app.app_context():
-        empty_db = "instance" not in os.listdir(os.getcwd()) or "database.sqlite3" not in os.listdir(f'{os.getcwd()}\\instance')
+        empty_db = "instance" not in os.listdir(os.getcwd()) \
+                   or "database.sqlite3" not in os.listdir(f'{os.getcwd()}\\instance')
 
         if empty_db:
             from application.models import BuildingCards, SoldiersCards, MagicCards, Rooms

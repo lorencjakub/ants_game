@@ -1,9 +1,8 @@
 from flask import Request
-from application.models import Rooms, Players
-from distinct_types import Union
+from application.models import Players
 
 
-def get_saved_player(request: Request) -> Union[Players, None]:
+def get_saved_player(request: Request) -> Players | None:
     player = None
     token = request.headers.get("Token")
     if token:
