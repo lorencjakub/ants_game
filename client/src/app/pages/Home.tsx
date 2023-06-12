@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useState } from 'react'
 import {
     Button,
     Paper,
@@ -22,10 +22,10 @@ const HomePage: FC<{}> = () => {
     const theme = useMuiTheme()
     const intl = useIntl()
     const { setPlayerCards = (data: ICard[]) => {} } = usePlayerCards()
+    const [creatingRoom, setCreatingRoom] = useState<boolean>(false)
 
     const {
-        refetch: createRoom,
-        isFetching: creatingRoom
+        refetch: createRoom
     } = useQuery<IRoomInfoResponse, AxiosError>(
         ["join_room_query"],
         async () => await ApiClient.createRoom(),
@@ -109,7 +109,10 @@ const HomePage: FC<{}> = () => {
                     }}
                 >
                     <Button
-                        onClick={() => createRoom()}
+                        onClick={() => {
+                            createRoom()
+                            setCreatingRoom(true)
+                        }}
                         variant="contained"
                         sx={{
                             backgroundColor: theme.palette.text.primary,

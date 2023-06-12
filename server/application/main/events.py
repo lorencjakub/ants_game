@@ -12,7 +12,7 @@ def connect():
     state = {"data": f'id: {request.sid} is connected'}
     state.update(get_current_state_in_room({"guid": request.values.get("guid")}))
 
-    emit("connect", state, broadcast=True)
+    emit("enter_room", state, broadcast=True)
 
 
 @socketio.on("state_update")

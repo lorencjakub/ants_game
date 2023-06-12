@@ -1,245 +1,127 @@
-import React, { FC } from "react"
+import React, { FC, useState, useEffect } from "react"
 import {
     Typography,
-    Card,
-    CardHeader,
-    CardMedia,
-    CardContent,
+    Grid,
+    Stack,
     Avatar
 } from "@mui/material"
-import { ICard } from "../../base/utils/Axios/types"
+import { ISources, IPlayerSourceState } from "../../base/utils/Axios/types"
 import { useIntl, FormattedMessage } from "react-intl"
 
 
-const getCardStyles = (type: ICard["type"]) => {
-    switch (type) {
-        case "building":
-            return { backgroundColor: "#ffe5e5", border: "solid 3px red" }
-
-        case "soldiers":
-            return { backgroundColor: "#d0f0c0", border: "solid 3px green" }
-
-        case "magic":
-            return { backgroundColor: "#afdbf5", border: "solid 3px blue" }
-
-        default:
-            return { backgroundColor: "#faba5f", border: "solid 3px #ff5733" }
-
-    }
-}
-
-
-const AntCard: FC<ICard> = ({ unit, price, item_name = "deck", type }) => {
+const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, player }) => {
     const intl = useIntl()
+    const [sourcesData, setSourcesData] = useState<IPlayerSourceState[]>([])
 
-    const cardLabels: { [key: string] : ICard } = {
-        "wall": {
-            cardName: intl.formatMessage({ id: "cards.wall.name", defaultMessage: "Wall" }),
-            message: <FormattedMessage id="cards.fence" defaultMessage="fence +{value}" values={{ value: 3 }} />
-        },
-        "defense": {
-            cardName: intl.formatMessage({ id: "cards.defense.name", defaultMessage: "Defense" }),
-            message: <FormattedMessage id="cards.fence" defaultMessage="fence +{value}" values={{ value: 6 }} />
-        },
-        "school": {
-            cardName: intl.formatMessage({ id: "cards.school.name", defaultMessage: "School" }),
-            message: intl.formatMessage({ id: "cards.school.message", defaultMessage: "builders +1" })
-        },
-        "base": {
-            cardName: intl.formatMessage({ id: "cards.base.name", defaultMessage: "Base" }),
-            message: <FormattedMessage id="cards.castle" defaultMessage="castle +{value}" values={{ value: 2 }} />
-        },
-        "reserve": {
-            cardName: intl.formatMessage({ id: "cards.reserve.name", defaultMessage: "Reserve" }),
-            message: intl.formatMessage({ id: "cards.reserve.message", defaultMessage: "castle +8, fence -4" })
-        },
-        "fence": {
-            cardName: intl.formatMessage({ id: "cards.fence.name", defaultMessage: "Fence" }),
-            message: <FormattedMessage id="cards.fence" defaultMessage="fence +{value}" values={{ value: 22 }} />
-        },
-        "wain": {
-            cardName: intl.formatMessage({ id: "cards.wain.name", defaultMessage: "Wain" }),
-            message: intl.formatMessage({ id: "cards.wain.message", defaultMessage: "castle +8, enemy castle -4" })
-        },
-        "tower": {
-            cardName: intl.formatMessage({ id: "cards.tower.name", defaultMessage: "Tower" }),
-            message: <FormattedMessage id="cards.castle" defaultMessage="castle +{value}" values={{ value: 5 }} />
-        },
-        "babel": {
-            cardName: intl.formatMessage({ id: "cards.babel.name", defaultMessage: "Babel" }),
-            message: <FormattedMessage id="cards.castle" defaultMessage="castle +{value}" values={{ value: 32 }} />
-        },
-        "fort": {
-            cardName: intl.formatMessage({ id: "cards.fort.name", defaultMessage: "Fort" }),
-            message: <FormattedMessage id="cards.castle" defaultMessage="castle +{value}" values={{ value: 20 }} />
-        },
-        "rider": {
-            cardName: intl.formatMessage({ id: "cards.rider.name", defaultMessage: "Rider" }),
-            message: <FormattedMessage id="cards.attack" defaultMessage="attack {value}" values={{ value: 4 }} />
-        },
-        "banshee": {
-            cardName: intl.formatMessage({ id: "cards.banshee.name", defaultMessage: "Banshee" }),
-            message: <FormattedMessage id="cards.attack" defaultMessage="attack {value}" values={{ value: 32 }} />
-        },
-        "saboteur": {
-            cardName: intl.formatMessage({ id: "cards.saboteur.name", defaultMessage: "Saboteur" }),
-            message: intl.formatMessage({ id: "cards.saboteur.message", defaultMessage: "enemy stocks -4" })
-        },
-        "archer": {
-            cardName: intl.formatMessage({ id: "cards.archer.name", defaultMessage: "Archer" }),
-            message: <FormattedMessage id="cards.attack" defaultMessage="attack {value}" values={{ value: 2 }} />
-        },
-        "knight": {
-            cardName: intl.formatMessage({ id: "cards.knight.name", defaultMessage: "Knight" }),
-            message: <FormattedMessage id="cards.attack" defaultMessage="attack {value}" values={{ value: 3 }} />
-        },
-        "platoon": {
-            cardName: intl.formatMessage({ id: "cards.platoon.name", defaultMessage: "Platoon" }),
-            message: <FormattedMessage id="cards.attack" defaultMessage="attack {value}" values={{ value: 6 }} />
-        },
-        "thief": {
-            cardName: intl.formatMessage({ id: "cards.thief.name", defaultMessage: "Thief" }),
-            message: intl.formatMessage({ id: "cards.thief.message", defaultMessage: "transfer enemy stock 5" })
-        },
-        "recruit": {
-            cardName: intl.formatMessage({ id: "cards.recruit.name", defaultMessage: "Recruit" }),
-            message: intl.formatMessage({ id: "cards.recruit.message", defaultMessage: "soldiers +1" })
-        },
-        "attack": {
-            cardName: intl.formatMessage({ id: "cards.attack.name", defaultMessage: "Attack" }),
-            message: <FormattedMessage id="cards.attack" defaultMessage="attack {value}" values={{ value: 12 }} />
-        },
-        "swat": {
-            cardName: intl.formatMessage({ id: "cards.swat.name", defaultMessage: "SWAT" }),
-            message: intl.formatMessage({ id: "cards.swat.message", defaultMessage: "enemy castle -10" })
-        },
-        "curse": {
-            cardName: intl.formatMessage({ id: "cards.curse.name", defaultMessage: "Curse" }),
-            message: intl.formatMessage({ id: "cards.curse.message", defaultMessage: "all +1, enemies all -1" })
-        },
-        "conjure_crystals": {
-            cardName: intl.formatMessage({ id: "cards.conjure_crystals.name", defaultMessage: "Conjure Crystals" }),
-            message: intl.formatMessage({ id: "cards.conjure_crystals.message", defaultMessage: "crystals +8" })
-        },
-        "conjure_weapons": {
-            cardName: intl.formatMessage({ id: "cards.conjure_weapons.name", defaultMessage: "Conjure Weapons" }),
-            message: intl.formatMessage({ id: "cards.conjure_weapons.message", defaultMessage: "weapons +8" })
-        },
-        "conjure_bricks": {
-            cardName: intl.formatMessage({ id: "cards.conjure_bricks.name", defaultMessage: "Conjure Bricks" }),
-            message: intl.formatMessage({ id: "cards.conjure_bricks.message", defaultMessage: "bricks +8" })
-        },
-        "crush_weapons": {
-            cardName: intl.formatMessage({ id: "cards.crush_weapons.name", defaultMessage: "Crush Weapons" }),
-            message: intl.formatMessage({ id: "cards.crush_weapons.message", defaultMessage: "enemy weapons -8" })
-        },
-        "crush_crystals": {
-            cardName: intl.formatMessage({ id: "cards.crush_crystals.name", defaultMessage: "Crush Crystals" }),
-            message: intl.formatMessage({ id: "cards.crush_crystals.message", defaultMessage: "enemies crystals -8" })
-        },
-        "crush_bricks": {
-            cardName: intl.formatMessage({ id: "cards.crush_bricks.name", defaultMessage: "Crush Bricks" }),
-            message: intl.formatMessage({ id: "cards.crush_bricks.message", defaultMessage: "enemies bricks -8" })
-        },
-        "dragon": {
-            cardName: intl.formatMessage({ id: "cards.dragon.name", defaultMessage: "Dragon" }),
-            message: <FormattedMessage id="cards.attack" defaultMessage="attack {value}" values={{ value: 25 }} />
-        },
-        "pixies": {
-            cardName: intl.formatMessage({ id: "cards.pixies.name", defaultMessage: "Pixies" }),
-            message: <FormattedMessage id="cards.castle" defaultMessage="castle +{value}" values={{ value: 22 }} />
-        },
-        "sorcerer": {
-            cardName: intl.formatMessage({ id: "cards.sorcerer.name", defaultMessage: "Sorcerer" }),
-            message: intl.formatMessage({ id: "cards.sorcerer.message", defaultMessage: "mages +1" })
-        }
+    const sourcesNames = {
+        "bricks": intl.formatMessage({ id: "sources.bricks", defaultMessage: "Bricks" }),
+        "builders": intl.formatMessage({ id: "sources.builders", defaultMessage: "Builders" }),
+        "weapons": intl.formatMessage({ id: "sources.weapons", defaultMessage: "Weapons" }),
+        "soldiers": intl.formatMessage({ id: "sources.soldiers", defaultMessage: "Soldiers" }),
+        "crystals": intl.formatMessage({ id: "sources.crystals", defaultMessage: "Crystal" }),
+        "mages": intl.formatMessage({ id: "sources.mages", defaultMessage: "Mages" }),
+        "castle": intl.formatMessage({ id: "sources.castle", defaultMessage: "Castle" }),
+        "fence": intl.formatMessage({ id: "sources.fence", defaultMessage: "Fence" })
     }
+
+    const createSourcesData = (data: ISources | null): IPlayerSourceState[] => {
+        if (!data) return []
+
+        var sources: IPlayerSourceState[] = []
+        const keys = ["bricks", "builders", "weapons", "soldiers", "crystals", "mages", "castle", "fence"]
+        
+        keys.forEach((k) => {
+            sources.push({
+                name: sourcesNames[k as keyof typeof sourcesNames],
+                unit: k,
+                amount: data[k as keyof typeof data]
+            })
+        })
+
+        return sources
+    }
+
+    useEffect(() => {
+        setSourcesData(createSourcesData(sources))
+    }, [sources])
 
     return (
-        <Card
+        <Grid
+            data-testid="pages.room.player_one_panel.sources"
+            container
+            spacing={1}
+            justifyContent="center"
+            alignItems="center"
+            direction="column"
+            style={{
+                display: 'flex',
+                overflow: 'hidden'
+            }}
             sx={{
-                m: 0.5,
-                height: 195,
-                width: 130,
-                ...getCardStyles(type)
+                m: 0,
+                p: 0
             }}
         >
+            <Typography
+                variant="h5"
+                textAlign="end"
+                sx={{
+                    color: "#000",
+                    mb: 2
+                }}
+            >
+                {player}
+            </Typography>
             {
-                (!unit || !price || !cardLabels[item_name as keyof typeof cardLabels]) ? null :
-                <React.Fragment>
-                    <CardHeader
-                        avatar={
+                sourcesData.map((data) => {
+                    const key = `${data.name}_${data.unit}_${data.amount}.player_one`
+
+                    return (
+                        <Stack
+                            key={`${key}_stack`}
+                            direction="row"
+                            alignItems="center"
+                            sx={{
+                                width: 150
+                            }}
+                        >
                             <Avatar
-                                src={`/cards/${unit}.svg`}
+                                key={`${key}_unit`}
+                                src={`/cards/${data.unit}.svg`}
                                 sx={{
                                     borderRadius: 0,
                                     width: 20,
                                     height: 20
                                 }}
                             />
-                        }
-                        action={
                             <Typography
+                                key={`${key}_name`}
                                 variant="body1"
-                                textAlign="center"
+                                textAlign="start"
                                 sx={{
-                                    mr: 1,
-                                    mt: 0.25,
+                                    mx: 2,
+                                    color: "#000",
+                                    minWidth: 80
+                                }}
+                            >
+                                {`${data.name}: `}
+                            </Typography>
+                            <Typography
+                                key={`${key}_price`}
+                                variant="body1"
+                                textAlign="end"
+                                sx={{
                                     color: "#000"
                                 }}
                             >
-                                {price}
+                                {data.amount}
                             </Typography>
-                        }
-                        sx={{
-                            p: 1,
-                            m: 0
-                        }}
-                    />
-                    <Typography
-                        variant="body2" 
-                        textAlign="center"
-                        sx={{
-                            p: 0,
-                            m: 0,
-                            mb: 1,
-                            color: "#000"
-                        }}
-                    >
-                        {cardLabels[item_name as keyof typeof cardLabels].cardName || ""}
-                    </Typography>
-                </React.Fragment>
+                        </Stack>
+                    )
+                })
             }
-            <CardMedia
-                component="img"
-                image={`/cards/${item_name}.svg`}
-                sx={{
-                    p: (item_name == "deck") ? 3 : 0,
-                    m: 0,
-                    maxHeight: (item_name == "deck") ? undefined : 60,
-                    height: (item_name == "deck") ? 195 : undefined,
-                    objectFit: "contain"
-                }}
-            />
-            {
-                (!cardLabels[item_name as keyof typeof cardLabels]) ? null :
-                <CardContent>
-                    <Typography
-                        variant="body2" 
-                        textAlign="center"
-                        sx={{
-                            p: 0,
-                            m: 0,
-                            fontSize: 11,
-                            color: "#000"
-                        }}
-                    >
-                        {cardLabels[item_name as keyof typeof cardLabels].message || ""}
-                    </Typography>
-                </CardContent>
-            }
-        </Card>
+        </Grid>
     )
 }
 
-export default AntCard
+export default Sources

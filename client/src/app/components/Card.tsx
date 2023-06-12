@@ -31,13 +31,11 @@ const getCardStyles = (type: ICard["type"]) => {
     }
 }
 
-
 export interface IInteractiveCard extends ICard {
     discardFn?: (itemName: string) => void,
     playFn?: (itemName: string) => void,
     key?: string
 }
-
 
 const AntCard: FC<IInteractiveCard> = ({ unit, price, item_name = "deck", type, discardFn = (itemName: string) => {}, playFn = (itemName: string) => {}, key }) => {
     const intl = useIntl()

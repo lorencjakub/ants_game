@@ -47,12 +47,17 @@ const Loading: FC<{ message?: string, spinner?: JSX.Element, sx?: any }> = ({ me
                             justifyContent: "center"
                         }}
                     >
-                        <CircularProgress
-                            sx={{
-                                color: "text.primary"
-                            }}
-                            disableShrink
-                        />
+                        {
+                            (spinner) ?
+                            spinner
+                            :
+                            <CircularProgress
+                                sx={{
+                                    color: "text.primary"
+                                }}
+                                disableShrink
+                            />
+                        }
                     </Grid>
                     <Grid
                         data-testid="containers.layout.content.loading.message"

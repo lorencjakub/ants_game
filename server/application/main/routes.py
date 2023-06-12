@@ -1,4 +1,5 @@
 from flask import request, Response
+import json
 from . import main
 from application.services import init_room, player_join_room_or_get_data,\
     discard_card, use_card_from_hand, deactivate_room, check_room, player_leave_room
@@ -15,7 +16,7 @@ def check_non_activate_room():
 
     except Exception as e:
         logging.error(traceback.format_exc())
-        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
+        return Response(json.dumps({"message": e.description if isinstance(e, CustomError) else e.args[0]}), 400)
 
 
 @main.route("/create_room", methods=["GET"])
@@ -26,7 +27,7 @@ def create_room() -> Response:
 
     except Exception as e:
         logging.error(traceback.format_exc())
-        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
+        return Response(json.dumps({"message": e.description if isinstance(e, CustomError) else e.args[0]}), 400)
 
 
 @main.route("/join_room/<guid>", methods=["GET"])
@@ -37,7 +38,7 @@ def join_room(guid: str) -> Response:
 
     except Exception as e:
         logging.error(traceback.format_exc())
-        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
+        return Response(json.dumps({"message": e.description if isinstance(e, CustomError) else e.args[0]}), 400)
 
 
 @main.route("/leave_room", methods=["GET"])
@@ -48,7 +49,7 @@ def leave_room() -> Response:
 
     except Exception as e:
         logging.error(traceback.format_exc())
-        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
+        return Response(json.dumps({"message": e.description if isinstance(e, CustomError) else e.args[0]}), 400)
 
 
 @main.route("/discard", methods=["POST"])
@@ -59,7 +60,7 @@ def discard() -> Response:
 
     except Exception as e:
         logging.error(traceback.format_exc())
-        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
+        return Response(json.dumps({"message": e.description if isinstance(e, CustomError) else e.args[0]}), 400)
 
 
 @main.route("/play_card", methods=["POST"])
@@ -70,7 +71,7 @@ def play_card() -> Response:
 
     except Exception as e:
         logging.error(traceback.format_exc())
-        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
+        return Response(json.dumps({"message": e.description if isinstance(e, CustomError) else e.args[0]}), 400)
 
 
 @main.route("/lock_room/<guid>", methods=["GET"])
@@ -81,4 +82,4 @@ def lock_room(guid: str) -> Response:
 
     except Exception as e:
         logging.error(traceback.format_exc())
-        return Response(e.description if isinstance(e, CustomError) else e.args[0], 400)
+        return Response(json.dumps({"message": e.description if isinstance(e, CustomError) else e.args[0]}), 400)

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react'
+import React, { FC, useEffect, useState, useReducer } from 'react'
 import {
     Button,
     Paper,
@@ -16,53 +16,44 @@ import {
     ISources
 } from '../../base/utils/Axios/types'
 import { AxiosError } from 'axios'
-import { useIntl } from "react-intl"
+import { useIntl, FormattedMessage } from "react-intl"
 import { useParams } from 'react-router-dom'
 import Card from "../components/Card"
 import { ICard } from '../../base/utils/Axios/types'
 import { usePlayerCards } from '../Providers/PlayerCards'
 import { io, Socket } from "socket.io-client"
+import Sources from '../components/Sources'
+import Loading from '../../base/components/Loading'
 
+
+export interface IRoomStatus {
+    active: boolean,
+    winner?: string
+}
+
+const initRoomStatus: IRoomStatus = {
+    active: true,
+    winner: undefined
+}
+
+const roomStatusReducer = (data: IRoomStatus, action: IRoomStatus) => {
+    return { ...data, ...action }
+}
 
 var socket: Socket
 
 const Room: FC<{}> = () => {
     const { guid } = useParams()
     const intl = useIntl()
-    const [myState, setMyState] = useState<IPlayerSourceState[]>([])
-    const [enemyState, setEnemyState] = useState<IPlayerSourceState[]>([])
+    const [myState, setMyState] = useState<ISources | null>(null)
+    const [enemyState, setEnemyState] = useState<ISources | null>(null)
+    const [roomStatus, setRoomStatus] = useReducer<(data: IRoomStatus, action: IRoomStatus) => IRoomStatus>(roomStatusReducer, initRoomStatus)    //TODO dopsat onError setnutí na true
     const {
         playerCards = [],
         setPlayerCards = (data: ICard[]) => {},
         discarded,
         setDiscardedCard = (card: ICard) => {}
     } = usePlayerCards()
-
-    const sourcesNames = {
-        "bricks": intl.formatMessage({ id: "sources.bricks", defaultMessage: "Bricks" }),
-        "builders": intl.formatMessage({ id: "sources.builders", defaultMessage: "Builders" }),
-        "weapons": intl.formatMessage({ id: "sources.weapons", defaultMessage: "Weapons" }),
-        "soldiers": intl.formatMessage({ id: "sources.soldiers", defaultMessage: "Soldiers" }),
-        "crystals": intl.formatMessage({ id: "sources.crystals", defaultMessage: "Crystal" }),
-        "mages": intl.formatMessage({ id: "sources.mages", defaultMessage: "Mages" }),
-        "castle": intl.formatMessage({ id: "sources.castle", defaultMessage: "Castle" }),
-        "fence": intl.formatMessage({ id: "sources.fence", defaultMessage: "Fence" })
-    }
-
-    const createSourcesData = (data: ISources): IPlayerSourceState[] => {
-        var sources: IPlayerSourceState[] = []
-        const keys = ["bricks", "builders", "weapons", "soldiers", "crystals", "mages", "castle", "fence"]
-        
-        keys.forEach((k) => {
-            sources.push({
-                name: sourcesNames[k as keyof typeof sourcesNames],
-                unit: k,
-                amount: data[k as keyof typeof data]
-            })
-        })
-
-        return sources
-    }
 
     const {
         refetch: joinRoom
@@ -71,9 +62,14 @@ const Room: FC<{}> = () => {
         async () => await ApiClient.joinRoom(guid),
         {
             enabled: false,
+            retry: 0,
             onSuccess: (res) => {
                 sessionStorage.setItem("Token", res.token)
                 setPlayerCards(res.cards)
+            },
+            onError: (e) => {
+                const errData: any = e?.response?.data
+                if (errData && errData.message && (errData.message == "Room is not active anymore")) setRoomStatus({ active: false })
             }
         }
     )
@@ -84,7 +80,9 @@ const Room: FC<{}> = () => {
         mutationFn: async (item_name) => await ApiClient.play(item_name),
         onSuccess: (res: any) => {
             if (res.winner) {
-                return socket.emit("winner", res.winner)
+                socket.emit("winner", res.winner)
+                setRoomStatus({ active: false, winner: res.winner })
+                return 
             }
 
             socket.emit("state_update", { discarded: res.discarded, guid: guid })
@@ -113,23 +111,24 @@ const Room: FC<{}> = () => {
             }
         )
 
-        socket.on("connect", (data: any) => {
-            console.log(data)
+        socket.on("enter_room", (data: any) => {
+            if (!sessionStorage.getItem("Token")) return
             const myToken = sessionStorage.getItem("Token")
-            const enemyToken = Object.keys(data).filter((k) => k !== sessionStorage.getItem("Token"))[0]
+            const enemyToken = Object.keys(data).filter((k) => k !== sessionStorage.getItem("Token") && k != "data")[0]
             
-            if (data[String(myToken)]) setMyState([ ...createSourcesData(data[String(myToken)] || {}) ])
-            if (data[String(enemyToken)]) setEnemyState([ ...createSourcesData(data[String(enemyToken)] || {}) ])
+            if (data[String(myToken)]) setMyState(data[String(myToken)])
+            if (data[String(enemyToken)]) setEnemyState(data[String(enemyToken)])
         })
 
         socket.on("state_update", (data: any) => {
+            if (!sessionStorage.getItem("Token")) return
             setDiscardedCard(data.discarded)
             
             const myToken = sessionStorage.getItem("Token")
             const enemyToken = Object.keys(data).filter((k) => k !== sessionStorage.getItem("Token") && k != "discarded")[0]
             
-            if (data[String(myToken)]) setMyState([ ...createSourcesData(data[String(myToken)] || {}) ])
-            if (data[String(enemyToken)]) setEnemyState([ ...createSourcesData(data[String(enemyToken)] || {}) ])
+            if (data[String(myToken)]) setMyState(data[String(myToken)])
+            if (data[String(enemyToken)]) setEnemyState(data[String(enemyToken)])
         })
 
         socket.on("discard_update", (data: any) => {
@@ -205,81 +204,21 @@ const Room: FC<{}> = () => {
                             p: 0
                         }}
                     >
-                        <Grid
-                            data-testid="pages.room.player_one_panel.sources"
-                            container
-                            spacing={1}
-                            justifyContent="center"
-                            alignItems="center"
-                            direction="column"
-                            style={{
-                                display: 'flex',
-                                overflow: 'hidden'
-                            }}
-                            sx={{
-                                m: 0,
-                                p: 0
-                            }}
-                        >
+                        {
+                            (myState) ?
+                            <Sources player="Player1" sources={myState} />
+                            :
                             <Typography
-                                variant="h5"
+                                variant="h4"
                                 textAlign="end"
                                 sx={{
                                     color: "#000",
                                     mb: 2
                                 }}
                             >
-                                Player1
+                                {intl.formatMessage({ id: "pages.room.player_panel.missing_data", defaultMessage: "No data available" })}
                             </Typography>
-                            {
-                                myState.map((data) => {
-                                    const key = `${data.name}_${data.unit}_${data.amount}.player_one`
-
-                                    return (
-                                        <Stack
-                                            key={`${key}_stack`}
-                                            direction="row"
-                                            alignItems="center"
-                                            sx={{
-                                                width: 150
-                                            }}
-                                        >
-                                            <Avatar
-                                                key={`${key}_unit`}
-                                                src={`/cards/${data.unit}.svg`}
-                                                sx={{
-                                                    borderRadius: 0,
-                                                    width: 20,
-                                                    height: 20
-                                                }}
-                                            />
-                                            <Typography
-                                                key={`${key}_name`}
-                                                variant="body1"
-                                                textAlign="start"
-                                                sx={{
-                                                    mx: 2,
-                                                    color: "#000",
-                                                    minWidth: 80
-                                                }}
-                                            >
-                                                {`${data.name}: `}
-                                            </Typography>
-                                            <Typography
-                                                key={`${key}_price`}
-                                                variant="body1"
-                                                textAlign="end"
-                                                sx={{
-                                                    color: "#000"
-                                                }}
-                                            >
-                                                {data.amount}
-                                            </Typography>
-                                        </Stack>
-                                    )
-                                })
-                            }
-                        </Grid>
+                        }
                     </Grid>
                     <Grid
                         data-testid="pages.room.battlefield"
@@ -318,94 +257,21 @@ const Room: FC<{}> = () => {
                             p: 0
                         }}
                     >
-                        <Grid
-                            data-testid="pages.room.player_two_panel.sources"
-                            container
-                            spacing={1}
-                            justifyContent="center"
-                            alignItems="center"
-                            direction="column"
-                            style={{
-                                display: 'flex',
-                                overflow: 'hidden'
-                            }}
-                            sx={{
-                                m: 0,
-                                p: 0
-                            }}
-                        >
+                        {
+                            (enemyState) ?
+                            <Sources player="Player2" sources={enemyState} />
+                            :
                             <Typography
-                                variant="h5"
+                                variant="h4"
                                 textAlign="end"
                                 sx={{
                                     color: "#000",
                                     mb: 2
                                 }}
                             >
-                                Player2
+                                {intl.formatMessage({ id: "pages.room.player_panel.missing_data", defaultMessage: "No data available" })}
                             </Typography>
-                            {
-                                (!enemyState)
-                                ?
-                                <Typography
-                                    variant="body1"
-                                    textAlign="end"
-                                    sx={{
-                                        color: "#000",
-                                        mb: 2
-                                    }}
-                                >
-                                    Waiting for Player2
-                                </Typography>
-                                :
-                                enemyState.map((data) => {
-                                    const key = `${data.name}_${data.unit}_${data.amount}.player_two`
-
-                                    return (
-                                        <Stack
-                                            key={`${key}_stack`}
-                                            direction="row"
-                                            alignItems="center"
-                                            sx={{
-                                                width: 150
-                                            }}
-                                        >
-                                            <Avatar
-                                                key={`${key}_unit`}
-                                                src={`/cards/${data.unit}.svg`}
-                                                sx={{
-                                                    borderRadius: 0,
-                                                    width: 20,
-                                                    height: 20
-                                                }}
-                                            />
-                                            <Typography
-                                                key={`${key}_name`}
-                                                variant="body1"
-                                                textAlign="start"
-                                                sx={{
-                                                    mx: 2,
-                                                    color: "#000",
-                                                    minWidth: 80
-                                                }}
-                                            >
-                                                {`${data.name}: `}
-                                            </Typography>
-                                            <Typography
-                                                key={`${key}_amount`}
-                                                variant="body1"
-                                                textAlign="end"
-                                                sx={{
-                                                    color: "#000"
-                                                }}
-                                            >
-                                                {data.amount}
-                                            </Typography>
-                                        </Stack>
-                                    )
-                                })
-                            }
-                        </Grid>
+                        }
                     </Grid>
                 </Grid>
                 <Grid
@@ -435,6 +301,26 @@ const Room: FC<{}> = () => {
                     })}
                 </Grid>
             </Grid>
+            {(myState) ? null :
+                <Loading
+                    message={intl.formatMessage({ id: "processing_backdrop_message.loading_data", defaultMessage: "Loading data..." })}
+                    sx={{
+                        backgroundColor: "background.default",
+                        opacity: 0,
+                        zIndex: 5
+                    }}
+                />
+            }
+            {(roomStatus.active) ? null :
+                <Loading
+                    spinner={<FormattedMessage id="processing_backdrop_message.locked_room" defaultMessage="This room is locked and inactive" />}
+                    sx={{
+                        backgroundColor: "background.default",
+                        opacity: 0,
+                        zIndex: 5
+                    }}
+                />
+            }
         </Paper>
     )
 }
