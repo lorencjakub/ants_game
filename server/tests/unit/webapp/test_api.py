@@ -3,6 +3,7 @@ from tests.unit.webapp.mocking import MOCKED_INIT_ROOM, MOCKED_DISCARD_RESPONSE,
     MOCKED_DB_QUERY
 from unittest.mock import patch, Mock
 import os
+import json
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -107,7 +108,7 @@ def test_007_routes_leave_room_fail(test_client) -> None:
         ):
             response = test_client.get('/leave_room')
             assert response.status_code == 400
-            assert response.data.decode() == "Invalid room"
+            assert json.loads(response.data.decode()) == {'message': 'Invalid room'}
 
 
 def test_008_routes_discard_success(test_client) -> None:
@@ -122,7 +123,7 @@ def test_009_routes_discard_fail(test_client) -> None:
     with patch("application.main.routes.check_room", side_effect=lambda x: None):
         response = test_client.post('/discard', json={})
         assert response.status_code == 400
-        assert response.data.decode() == "Missing card"
+        assert json.loads(response.data.decode()) == {'message': 'Missing card'}
 
 
 def test_0010_routes_play_card_success(test_client) -> None:
@@ -138,7 +139,7 @@ def test_0011_routes_play_card_win(test_client) -> None:
         with patch("application.main.routes.use_card_from_hand", side_effect=lambda x: {"winner": "Player1"}):
             response = test_client.post('/play_card', json={"card_name": "TestCard"})
             assert response.status_code == 200
-            assert response.json == {"winner": "Player1"}
+            assert response.json == {'winner': 'Player1'}
 
 
 def test_012_routes_play_card_fail(test_client) -> None:
@@ -148,7 +149,7 @@ def test_012_routes_play_card_fail(test_client) -> None:
         ):
             response = test_client.post('/play_card', json={})
             assert response.status_code == 400
-            assert response.data.decode() == "Missing card"
+            assert json.loads(response.data.decode()) == {'message': 'Missing card'}
 
 
 def test_013_routes_lock_room_success(test_client) -> None:
@@ -164,7 +165,7 @@ def test_014_routes_lock_room_fail_invalid_room(test_client) -> None:
         with patch("application.services.functions.get_saved_player", side_effect=lambda x: Mock(is_host=False)):
             response = test_client.get('/lock_room/TestRoom')
             assert response.status_code == 400
-            assert response.data.decode() == "Invalid room"
+            assert json.loads(response.data.decode()) == {'message': 'Invalid room'}
 
 
 def test_015_routes_lock_room_fail_non_host(test_client) -> None:
@@ -173,7 +174,7 @@ def test_015_routes_lock_room_fail_non_host(test_client) -> None:
             with patch("application.services.functions.get_saved_player", side_effect=lambda x: Mock(is_host=False)):
                 response = test_client.get('/lock_room/TestRoom')
                 assert response.status_code == 400
-                assert response.data.decode() == "Only host player is able to deactivate room"
+                assert json.loads(response.data.decode()) == {'message': 'Only host player is able to deactivate room'}
 
 
 def test_016_routes_check_locked_room(test_client) -> None:
@@ -182,4 +183,4 @@ def test_016_routes_check_locked_room(test_client) -> None:
     ):
         response = test_client.get('/lock_room/TestRoom')
         assert response.status_code == 400
-        assert response.data.decode() == "Room is not active anymore"
+        assert json.loads(response.data.decode()) == {'message': 'Room is not active anymore'}

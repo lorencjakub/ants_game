@@ -1,6 +1,7 @@
 """Extensions module. Each extension is initialized in the app factory located in app.py."""
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect
 import os
 import shutil
 import json
@@ -13,7 +14,6 @@ migrate = Migrate()
 def initialize_db():
     print('No DB found. Creating...')
 
-    # if "migrations" in os.listdir(os.getcwd()) and "versions" not in os.listdir(f'{os.getcwd()}/migrations'):
     if "migrations" in os.listdir(os.getcwd()):
         shutil.rmtree(f'{os.getcwd()}/migrations')
 
@@ -24,7 +24,7 @@ def initialize_db():
 
 
 def init_cards():
-    from application.models import BuildingCards, SoldiersCards, MagicCards, Rooms
+    from application.models import BuildingCards, SoldiersCards, MagicCards
 
     with open(f'{os.getcwd()}/config/building_cards.json', encoding='utf-8') as b:
         building_cards = json.load(b)

@@ -41,7 +41,7 @@ class BuildingCardsInDeck(db.Model):
     __tablename__ = "building_cards_in_deck"
 
     card = db.Column(db.Integer, db.ForeignKey("building_cards.id"), primary_key=True)
-    room = db.Column(db.String(32), db.ForeignKey("rooms.id"), primary_key=True)
+    room = db.Column(db.Integer, db.ForeignKey("rooms.id"), primary_key=True)
     count = db.Column(db.Integer, nullable=False, default=1)
 
 
@@ -49,7 +49,7 @@ class SoldiersCardsInDeck(db.Model):
     __tablename__ = "soldiers_cards_in_deck"
 
     card = db.Column(db.Integer, db.ForeignKey("soldiers_cards.id"), primary_key=True)
-    room = db.Column(db.String(32), db.ForeignKey("rooms.id"), primary_key=True)
+    room = db.Column(db.Integer, db.ForeignKey("rooms.id"), primary_key=True)
     count = db.Column(db.Integer, nullable=False, default=1)
 
 
@@ -57,7 +57,7 @@ class MagicCardsInDeck(db.Model):
     __tablename__ = "magic_cards_in_deck"
 
     card = db.Column(db.Integer, db.ForeignKey("magic_cards.id"), primary_key=True)
-    room = db.Column(db.String(32), db.ForeignKey("rooms.id"), primary_key=True)
+    room = db.Column(db.Integer, db.ForeignKey("rooms.id"), primary_key=True)
     count = db.Column(db.Integer, nullable=False, default=1)
 
 

@@ -1,7 +1,6 @@
-from flask import session, request
-from flask_socketio import emit, join_room, leave_room
+from flask import request
+from flask_socketio import emit
 from .. import socketio
-from application.models import Rooms, create_data_dict
 from application.services.functions import get_current_state_in_room
 
 
@@ -44,28 +43,3 @@ def disconnect():
     print(f'user {request.sid} disconnected')
 
     emit("disconnect", f'user {request.sid} disconnected', broadcast=True)
-
-# @socketio.on('joined', namespace='/chat')
-# def joined(message):
-#     """Sent by clients when they enter a room.
-#     A status message is broadcast to all people in the room."""
-#     room = session.get('room')
-#     join_room(room)
-#     emit('status', {'msg': session.get('name') + ' has entered the room.'}, room=room)
-#
-#
-# @socketio.on('text', namespace='/chat')
-# def text(message):
-#     """Sent by a client when the user entered a new message.
-#     The message is sent to all people in the room."""
-#     room = session.get('room')
-#     emit('message', {'msg': session.get('name') + ':' + message['msg']}, room=room)
-#
-#
-# @socketio.on('left', namespace='/chat')
-# def left(message):
-#     """Sent by clients when they leave a room.
-#     A status message is broadcast to all people in the room."""
-#     room = session.get('room')
-#     leave_room(room)
-#     emit('status', {'msg': session.get('name') + ' has left the room.'}, room=room)

@@ -56,7 +56,8 @@ const Room: FC<{}> = () => {
     } = usePlayerCards()
 
     const {
-        refetch: joinRoom
+        refetch: joinRoom,
+		isFetching: collectingRoomData
     } = useQuery<IRoomInfoResponse, AxiosError>(
         ["join_room_query"],
         async () => await ApiClient.joinRoom(guid),
@@ -66,6 +67,7 @@ const Room: FC<{}> = () => {
             onSuccess: (res) => {
                 sessionStorage.setItem("Token", res.token)
                 setPlayerCards(res.cards)
+				socket.emit("connect")
             },
             onError: (e) => {
                 const errData: any = e?.response?.data
@@ -301,7 +303,7 @@ const Room: FC<{}> = () => {
                     })}
                 </Grid>
             </Grid>
-            {(myState) ? null :
+{/*             {(myState && !collectingRoomData) ? null :
                 <Loading
                     message={intl.formatMessage({ id: "processing_backdrop_message.loading_data", defaultMessage: "Loading data..." })}
                     sx={{
@@ -310,7 +312,7 @@ const Room: FC<{}> = () => {
                         zIndex: 5
                     }}
                 />
-            }
+            } */}
             {(roomStatus.active) ? null :
                 <Loading
                     spinner={<FormattedMessage id="processing_backdrop_message.locked_room" defaultMessage="This room is locked and inactive" />}

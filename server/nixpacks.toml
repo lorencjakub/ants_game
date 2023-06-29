@@ -1,11 +1,11 @@
 providers = ["python"]
 
 [variables]
-NIXPACKS_PYTHON_VERSION = "3.11"
+NIXPACKS_PYTHON_VERSION = "3.11.3"
 BE_ENV = 'prod'
 
 [phases.custom_install]
-cmds = ["pip3 install gunicorn"]
+cmds = ["pip install git+https://github.com/benoitc/gunicorn.git"]
 dependsOn = ['install']
 
 [phases.test]
@@ -13,4 +13,4 @@ cmds = ["export BE_ENV=test", "coverage run -m pytest || exit -1", "coverage rep
 dependsOn = ['custom_install']
 
 [start]
-cmd = "gunicorn -b 0.0.0.0:8000 'main_run:main_loop()'"
+cmd = "gunicorn --worker-class eventlet -b 0.0.0.0:8000 --workers 1 --threads 100 main_run:app"

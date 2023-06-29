@@ -12,7 +12,7 @@ import json
 from distinct_types import Tuple
 
 BE_ENV = os.environ.get("BE_ENV")
-socketio = SocketIO()
+socketio = SocketIO(logger=True, engineio_logger=True)
 
 
 def create_app(with_secutiry: bool = True, with_sockets: bool = False) -> Flask | Tuple[Flask, SocketIO]:
