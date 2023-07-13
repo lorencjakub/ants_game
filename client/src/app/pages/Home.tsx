@@ -33,7 +33,7 @@ const HomePage: FC<{}> = () => {
             enabled: false,
             onSuccess: (res) => {
                 sessionStorage.setItem("Token", res.token)
-                setPlayerCards(res.cards)
+                setPlayerCards(res.cards, "createRoom")
                 navigate(`/room/${res.room}`)
             }
         }
@@ -101,7 +101,7 @@ const HomePage: FC<{}> = () => {
                     </Typography>
                 </Grid>
                 <Grid
-                    data-testid="pages.homepage.menu_button"
+                    data-testid="pages.homepage.new_room_button"
                     item
                     style={{
                         display: "flex",

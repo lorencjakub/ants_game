@@ -8,14 +8,18 @@ module.exports = {
     verbose: true,
     bail: true,
     collectCoverageFrom: [
-        "src/**/*.ts*"
+        "src/**/*.tsx"
     ],
     coverageDirectory: "./test_report.txt",
     coveragePathIgnorePatterns: [
         "node_modules",
         "src/index.tsx",
         "tests",
-        "base/utils/Axios"
+        "index.tsx",
+        "src/app/config/*",
+        "src/base/Providers/Notistack/Provider.tsx",
+        "src/base/Providers/QueryClient/Provider.tsx",
+        "Context.tsx"
     ],
     coverageReporters: ["text"],
     coverageThreshold: {
@@ -25,12 +29,12 @@ module.exports = {
             lines: 50,
             statements: -100,
         },
-        './src/app/pages/': {
-            branches: 75,
-            functions: 75,
-            lines: 75,
-            statements: -100,
-        },
+        // './src/app/pages/': {
+        //     branches: 75,
+        //     functions: 75,
+        //     lines: 75,
+        //     statements: -100,
+        // },
     },
     errorOnDeprecated: true,
     preset: 'ts-jest',

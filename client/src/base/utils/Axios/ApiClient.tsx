@@ -1,7 +1,8 @@
 import axios, { AxiosInstance } from "axios"
 import {
     IRoomInfoResponse,
-    ITurnResponse
+    ITurnResponse,
+    IWinTurnResponse
 } from "./types"
 
 
@@ -50,10 +51,10 @@ const discard = async (cardName: string): Promise<ITurnResponse> => {
     return response.data
 }
 
-const play = async (itemName: string): Promise<ITurnResponse> => {
+const play = async (itemName: string): Promise<ITurnResponse | IWinTurnResponse> => {
     if (!itemName) throw { response: { data: { message: "no_card" } } }
 
-    const response = await apiClient().post<ITurnResponse>("/play_card", { card_name: itemName })
+    const response = await apiClient().post<ITurnResponse | IWinTurnResponse>("/play_card", { card_name: itemName })
     return response.data
 }
 

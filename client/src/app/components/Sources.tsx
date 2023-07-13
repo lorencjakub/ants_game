@@ -74,10 +74,12 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
             </Typography>
             {
                 sourcesData.map((data) => {
-                    const key = `${data.name}_${data.unit}_${data.amount}.player_one`
+                    const { unit, amount, name } = data
+                    const key = `${name}_${unit}_${amount}.${player}`
 
                     return (
                         <Stack
+                            data-testid={`source_row.${unit}`}
                             key={`${key}_stack`}
                             direction="row"
                             alignItems="center"
@@ -86,8 +88,9 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
                             }}
                         >
                             <Avatar
+                                data-testid={`source_row.${unit}.unit_icon`}
                                 key={`${key}_unit`}
-                                src={`/cards/${data.unit}.svg`}
+                                src={`/cards/${unit}.svg`}
                                 sx={{
                                     borderRadius: 0,
                                     width: 20,
@@ -95,6 +98,7 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
                                 }}
                             />
                             <Typography
+                                data-testid={`source_row.${unit}.unit_name`}
                                 key={`${key}_name`}
                                 variant="body1"
                                 textAlign="start"
@@ -104,9 +108,10 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
                                     minWidth: 80
                                 }}
                             >
-                                {`${data.name}: `}
+                                {`${name}: `}
                             </Typography>
                             <Typography
+                                data-testid={`source_row.${unit}.amount`}
                                 key={`${key}_price`}
                                 variant="body1"
                                 textAlign="end"
@@ -114,7 +119,7 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
                                     color: "#000"
                                 }}
                             >
-                                {data.amount}
+                                {amount}
                             </Typography>
                         </Stack>
                     )

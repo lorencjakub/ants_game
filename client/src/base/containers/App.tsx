@@ -31,7 +31,7 @@ const cache = createCache({
 const AppContainer: FC<{}> = () => {
     const { locale, getMessages } = useLocale()
     const messages = useMemo(
-        () => (getMessages) ? getMessages(locale || "cs") : {},
+        () => (getMessages) ? getMessages(locale) : {},
         [locale]
     )
 
@@ -50,7 +50,7 @@ const AppContainer: FC<{}> = () => {
     return (
         <MuiThemeProvider theme={theme}>
             <CssBaseline enableColorScheme>
-                <IntlProvider locale={locale || "cs"} messages={messages}>
+                <IntlProvider locale={locale || process.env.DEFAULT_LANGUAGE || "cs"} messages={messages}>
                     <ErrorProvider>
                         <NotistackProvider>
                             <QueryClientProvider>

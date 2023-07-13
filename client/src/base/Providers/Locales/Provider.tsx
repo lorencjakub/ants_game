@@ -8,7 +8,7 @@ import {
 } from "../../../app/config/locales"
 
 
-export function messagesGetter(locale: string) {
+export function messagesGetter(locale: string): { [key: string]: string } {
     switch (locale) {
         case "cs":
             return csMessages
@@ -21,23 +21,24 @@ export function messagesGetter(locale: string) {
     }
 }
 
-const LocaleProvider: FC<{ children: any, persistKey?: string, defaultLocale?: string }> = ({ children, persistKey = "locale", defaultLocale = "cs" }) => {
+const LocaleProvider: FC<{ children: any, persistKey?: string, defaultLocale?: string }> = ({ children, persistKey = "locale", defaultLocale = String(process.env.DEFAULT_LANGUAGE) }) => {
     const persistLocale = localStorage.getItem(persistKey)
     const [locale, setLocale] = useState<string>(persistLocale || defaultLocale)
     const flags: { [key: string] : string } = { ...flagUrls}
-    const allLocales = Object.keys(flags)
+    const allLocales = Object.keys(flags).filter(l => String(process.env.ACTIVE_LANGUAGES).split(",").includes(l))
 
     useEffect(() => {
-        setLocale(locale)
-        localStorage.setItem(persistKey, locale)
+        const lang: string = (process.env.ACTIVE_LANGUAGES || "cs").split(",").includes(locale) ? locale : String(process.env.DEFAULT_LANGUAGE)
+        setLocale(lang)
+        localStorage.setItem(persistKey, lang)
     }, [locale])
 
     const getLocaleFlagUrl = (locale: string) => {
         return flags[locale || defaultLocale]
     }
 
-    const getMessages = () => {
-        return messagesGetter(locale || defaultLocale)
+    const getMessages = (locale?: string) => {
+        return messagesGetter(locale || String(process.env.DEFAULT_LANGUAGE))
     }
 
     return (

@@ -13,7 +13,8 @@ import {
     IRoomInfoResponse,
     ITurnResponse,
     IPlayerSourceState,
-    ISources
+    ISources,
+    IWinTurnResponse
 } from '../../base/utils/Axios/types'
 import { AxiosError } from 'axios'
 import { useIntl, FormattedMessage } from "react-intl"
@@ -24,6 +25,7 @@ import { usePlayerCards } from '../Providers/PlayerCards'
 import { io, Socket } from "socket.io-client"
 import Sources from '../components/Sources'
 import Loading from '../../base/components/Loading'
+import { EventNames } from '../../base/utils/SocketIO/eventNames'
 
 
 export interface IRoomStatus {
@@ -50,8 +52,8 @@ const Room: FC<{}> = () => {
     const [roomStatus, setRoomStatus] = useReducer<(data: IRoomStatus, action: IRoomStatus) => IRoomStatus>(roomStatusReducer, initRoomStatus)    //TODO dopsat onError setnutí na true
     const {
         playerCards = [],
-        setPlayerCards = (data: ICard[]) => {},
-        discarded,
+        setPlayerCards = (data: ICard[], eventName: string) => {},
+        discarded = {},
         setDiscardedCard = (card: ICard) => {}
     } = usePlayerCards()
 
@@ -66,8 +68,7 @@ const Room: FC<{}> = () => {
             retry: 0,
             onSuccess: (res) => {
                 sessionStorage.setItem("Token", res.token)
-                setPlayerCards(res.cards)
-				socket.emit("connect")
+                setPlayerCards(res.cards, "joinRoom")
             },
             onError: (e) => {
                 const errData: any = e?.response?.data
@@ -78,17 +79,17 @@ const Room: FC<{}> = () => {
 
     const {
         mutate: playCard
-    } = useMutation<ITurnResponse, AxiosError, string>({
+    } = useMutation<ITurnResponse | IWinTurnResponse, AxiosError, string>({
         mutationFn: async (item_name) => await ApiClient.play(item_name),
         onSuccess: (res: any) => {
             if (res.winner) {
-                socket.emit("winner", res.winner)
+                socket.emit(EventNames.SERVER_WINNER, res.winner)
                 setRoomStatus({ active: false, winner: res.winner })
                 return 
             }
 
-            socket.emit("state_update", { discarded: res.discarded, guid: guid })
-            setPlayerCards(res.cards)
+            socket.emit(EventNames.SERVER_STATE_UPDATE, { discarded: res.discarded, guid: guid, action: "play" })
+            setPlayerCards(res.cards, "playCard")
         }
     })
 
@@ -97,8 +98,8 @@ const Room: FC<{}> = () => {
     } = useMutation<ITurnResponse, AxiosError, string>({
         mutationFn: async (item_name) => await ApiClient.discard(item_name),
         onSuccess: (res: any) => {
-            setPlayerCards(res.cards)
-            socket.emit("discard_update", { discarded: res.discarded, guid: guid })
+            setPlayerCards(res.cards, "discardCard")
+            socket.emit(EventNames.SERVER_STATE_UPDATE, { discarded: res.discarded, guid: guid, action: "discard" })
         }
     })
 
@@ -113,18 +114,18 @@ const Room: FC<{}> = () => {
             }
         )
 
-        socket.on("enter_room", (data: any) => {
+        socket.on(EventNames.ENTER_ROOM, (data: { [playerToken: string]: ISources }) => {
             if (!sessionStorage.getItem("Token")) return
             const myToken = sessionStorage.getItem("Token")
             const enemyToken = Object.keys(data).filter((k) => k !== sessionStorage.getItem("Token") && k != "data")[0]
-            
+
             if (data[String(myToken)]) setMyState(data[String(myToken)])
             if (data[String(enemyToken)]) setEnemyState(data[String(enemyToken)])
         })
 
-        socket.on("state_update", (data: any) => {
+        socket.on(EventNames.CLIENT_STATE_UPDATE, (data: any) => {
             if (!sessionStorage.getItem("Token")) return
-            setDiscardedCard(data.discarded)
+            if ((Object.keys(data).length == 1) && (Object.keys(data)[0] == "discarded")) return setDiscardedCard(data.discarded)
             
             const myToken = sessionStorage.getItem("Token")
             const enemyToken = Object.keys(data).filter((k) => k !== sessionStorage.getItem("Token") && k != "discarded")[0]
@@ -133,20 +134,16 @@ const Room: FC<{}> = () => {
             if (data[String(enemyToken)]) setEnemyState(data[String(enemyToken)])
         })
 
-        socket.on("discard_update", (data: any) => {
-            setDiscardedCard(data.discarded)
+        socket.on(EventNames.CLIENT_WINNER, (token: any) => {
+            alert(`Player ${token} wins!`)
+            console.log(`Player ${token} wins!`)
         })
 
-        socket.on("winner", (data: any) => {
-            alert(`Player ${data} wins!`)
-            console.log(`Player ${data} wins!`)
-        })
-
-        socket.on("disconnect", (data) => {
+        socket.on(EventNames.DISCONNECT, (data) => {
             console.log(data)
         })
 
-        return function cleanup() {
+        return () => {
             socket.disconnect()
         }
     }, [])
@@ -240,7 +237,7 @@ const Room: FC<{}> = () => {
                         }}
                     >
                         <Card />
-                        {(!discarded) ? null : <Card { ...discarded } />}
+                        {(Object.keys(discarded).length === 0) ? null : <Card { ...discarded } />}
                     </Grid>
                     <Grid
                         data-testid="pages.room.player_two_panel"

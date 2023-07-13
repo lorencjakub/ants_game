@@ -40,7 +40,7 @@ const PageFooter: FC<{}> = () => {
                         mx: 2
                     }}
                 >
-                    {`2022${(currentYear != 2022) ? `-${currentYear}` : ""} Jakub Lorenc`}
+                    {`2023${(currentYear != 2023) ? `-${currentYear}` : ""} Jakub Lorenc`}
                 </Typography>
                 <Link
                     variant="body1"

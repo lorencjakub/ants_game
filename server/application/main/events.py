@@ -14,27 +14,25 @@ def connect():
     emit("enter_room", state, broadcast=True)
 
 
-@socketio.on("state_update")
+@socketio.on("server_state_update")
 def handle_state_update(data):
     """Event listener when player finish his turn, game is going to update state."""
+    action = data.get("action")
     state = {"discarded": data.get("discarded")}
+    
+    if action == "discard":
+        emit("client_state_update", state, broadcast=True)
+    
     state.update(get_current_state_in_room(data))
 
-    emit("state_update", state, broadcast=True)
+    emit("client_state_update", state, broadcast=True)
 
 
-@socketio.on("discard_update")
-def handle_discard_update(data):
-    """Event listener when player finish his turn, game is going to update state."""
-
-    emit("discard_update", {"discarded": data.get("discarded")}, broadcast=True)
-
-
-@socketio.on('winner')
+@socketio.on('server_winner')
 def winner(winner_name):
     """event listener when client connects to the server"""
 
-    emit("winner", winner_name, broadcast=True)
+    emit("client_winner", winner_name, broadcast=True)
 
 
 @socketio.on('disconnect')

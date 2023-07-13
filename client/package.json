@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "test": "jest",
     "test:ci": "env NODE_ENV=test jest --silent --watchAll=false --ci --coverage",
+    "clear_jest": "jest --clearCache",
     "extract": "formatjs extract \"src/**/*.tsx\" --out-file src/app/config/locales/extracted.json --id-interpolation-pattern '[sha512:contenthash:base64:6]'",
     "compile": "formatjs compile \"src/app/config/locales/extracted.json\" --out-file src/app/config/locales/en.json",
     "extract-compile": "formatjs extract \"src/**/*.tsx\" --out-file src/app/config/locales/extracted.json --flatten --id-interpolation-pattern '[sha512:contenthash:base64:6]' && formatjs compile \"src/app/config/locales/extracted.json\" --out-file src/app/config/locales/en.json"

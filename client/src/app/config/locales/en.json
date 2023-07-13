@@ -55,7 +55,7 @@
   "pages.not_found.title": "Page not found!",
   "pages.room.player_panel.missing_data": "No data available",
   "processing_backdrop_message.creating_room": "Room is creating...",
-  "processing_backdrop_message.loading_data": "Loading data...",
+  "processing_backdrop_message.locked_room": "This room is locked and inactive",
   "sources.bricks": "Bricks",
   "sources.builders": "Builders",
   "sources.castle": "Castle",

@@ -1,26 +1,22 @@
 import React from "react"
-import { render, screen, act } from "../testSetup"
-import App from "../../base/containers/App"
+import {
+    render,
+    screen,
+    act
+} from "../testSetup"
+import Page from "../../base/containers/Page"
 import PageFooter from "../../app/components/PageFooter"
 
 
-beforeEach(() => {
-    jest.clearAllMocks()
-    document.body.innerHTML = ""
-    localStorage.clear()
-})
-
 describe("Test of App render", () => {
     test("Layout of site", async () => {
-        await act(async () => {
-            render(<App />)
-        })
+        render(<Page />)
     
         expect(screen.getByTestId("containers.layout")).toBeInTheDocument()
 
         expect(screen.getByTestId("containers.layout.header.container")).toBeInTheDocument()
         expect(screen.getByTestId("containers.layout.header.appbar.logo")).toBeInTheDocument()
-        expect(screen.getByText("NUTRI MANAGER")).toBeInTheDocument()
+        expect(screen.getByText("ANTS ONLINE")).toBeInTheDocument()
 
         expect(screen.getByTestId("containers.layout.header.appbar.language_select")).toBeInTheDocument()
         expect(screen.getByTestId("containers.layout.header.appbar.flag")).toBeInTheDocument()
@@ -29,26 +25,33 @@ describe("Test of App render", () => {
         expect(screen.getByTestId("BrightnessLowIcon")).toBeInTheDocument()
         
         expect(screen.getByTestId("containers.layout.content.container")).toBeInTheDocument()
+        expect(screen.getByTestId("containers.layout.content.container")).toBeInTheDocument()
         expect(screen.getByTestId("containers.layout.footer.container")).toBeInTheDocument()
     })
 
-    test("Test of Footer - 2022", () => {
-        jest.useFakeTimers()
-        jest.setSystemTime(new Date("2022-04-01"))
-
-        render(<PageFooter />)
-    
-        expect(screen.getByTestId("containers.layout.footer")).toBeInTheDocument()
-        expect(screen.getByText("2022 Jakub Lorenc")).toBeInTheDocument()
-    })
-
-    test("Test of Footer - after 2022", () => {
+    test("Test of Footer - 2023", () => {
         jest.useFakeTimers()
         jest.setSystemTime(new Date("2023-04-01"))
 
         render(<PageFooter />)
     
         expect(screen.getByTestId("containers.layout.footer")).toBeInTheDocument()
-        expect(screen.getByText("2022-2023 Jakub Lorenc")).toBeInTheDocument()
+        expect(screen.getByText("2023 Jakub Lorenc")).toBeInTheDocument()
+
+        jest.runOnlyPendingTimers()
+        jest.useRealTimers()
+    })
+
+    test("Test of Footer - after 2024", () => {
+        jest.useFakeTimers()
+        jest.setSystemTime(new Date("2024-04-01"))
+
+        render(<PageFooter />)
+    
+        expect(screen.getByTestId("containers.layout.footer")).toBeInTheDocument()
+        expect(screen.getByText("2023-2024 Jakub Lorenc")).toBeInTheDocument()
+
+        jest.runOnlyPendingTimers()
+        jest.useRealTimers()
     })
 })

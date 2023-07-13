@@ -5,50 +5,48 @@ import { useErrors } from "../Errors"
 
 
 const Provider: FC<{ children: ReactNode }> = ({ children }) => {
-  const { enqueueSnackbar } = useSnackbar()
-  const { parseErrorMessage } = useErrors()
+    const { enqueueSnackbar } = useSnackbar()
+    const { parseErrorMessage } = useErrors()
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: Infinity,
-        onError: (err: any) => {
-          console.log(err)
-          var errorData = ""
+    const queryClient = new QueryClient({
+        defaultOptions: {
+            queries: {
+                staleTime: Infinity,
+                onError: (err: any) => {
+                    var errorData = ""
 
-          if (!err?.response && err?.message) {
-            errorData = err?.message
-          } else if (err?.response?.data && err?.response?.data.message) {
-            errorData = err?.response?.data.message
-          }
+                    if (!err?.response && err?.message) {
+                        errorData = err?.message
+                    } else if (err?.response?.data && err?.response?.data.message) {
+                        errorData = err?.response?.data.message
+                    }
 
-          enqueueSnackbar(
-            parseErrorMessage && parseErrorMessage(errorData),
-            {
-              variant: "error"
+                    enqueueSnackbar(
+                        parseErrorMessage && parseErrorMessage(errorData),
+                        {
+                            variant: "error"
+                        }
+                    )
+                }
+            },
+            mutations: {
+                onError: (err: any) => {
+                    enqueueSnackbar(
+                        parseErrorMessage && parseErrorMessage(err?.response?.data),
+                        {
+                            variant: "error"
+                        }
+                    )
+                }
             }
-          )
         }
-      },
-      mutations: {
-        onError: (err: any) => {
-          console.log(err)
-          enqueueSnackbar(
-            parseErrorMessage && parseErrorMessage(err?.response?.data),
-            {
-              variant: "error"
-            }
-          )
-        }
-      }
-    },
-  })
-  
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  )
+    })
+
+    return (
+        <QueryClientProvider client={queryClient}>
+            {children}
+        </QueryClientProvider>
+    )
 }
 
 export default Provider

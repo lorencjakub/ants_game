@@ -91,7 +91,6 @@ const PageHeader: FC<{ pageTitle: string, appBarContent?: ReactNode }> = ({ page
                             flexDirection: "row"
                         }}
                     >
-                        
                         {appBarContent}
                     </Grid>
                 </Grid>

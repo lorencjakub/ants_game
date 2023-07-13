@@ -5,12 +5,12 @@ export interface IRoomInfoResponse {
 }
 
 export interface ICard {
-    unit?: "bricks" | "weapons" | "crystals",
-    price?: number,
-    item_name?: string,
+    unit: "bricks" | "weapons" | "crystals",
+    price: number,
+    item_name: string,
     cardName?: string,
     message?: string | JSX.Element,
-    type?: "building" | "soldiers" | "magic" | "deck"
+    type: "building" | "soldiers" | "magic" | "deck"
 }
 
 export interface ISources {
@@ -26,10 +26,11 @@ export interface ISources {
 
 export interface ITurnResponse {
     cards: ICard[],
-    discarder: ICard,
-    state: {
-        [token: string]: ISources
-    }
+    discarded: ICard
+}
+
+export interface IWinTurnResponse {
+    winner: string
 }
 
 export interface IPlayerSourceState {

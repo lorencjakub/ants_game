@@ -5,7 +5,7 @@ interface ILocaleContext {
     locale?: string,
     setLocale?: (locale: string) => void,
     getLocaleFlagUrl?: (locale: string) => string,
-    getMessages?: (locale: string) => { [key: string] : string },
+    getMessages?: (locale?: string) => { [key: string] : string },
     allLocales: string[]
 }
 

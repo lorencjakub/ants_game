@@ -55,7 +55,7 @@
   "pages.not_found.title": "Stránka nenalezena!",
   "pages.room.player_panel.missing_data": "Žádná data",
   "processing_backdrop_message.creating_room": "Vytváření místnosti...",
-  "processing_backdrop_message.loading_data": "Načítání dat...",
+  "processing_backdrop_message.locked_room": "Tato místnost je zamčená a nadále neaktivní",
   "sources.bricks": "Cihly",
   "sources.builders": "Stavitelé",
   "sources.castle": "Hrad",

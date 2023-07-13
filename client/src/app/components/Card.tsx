@@ -31,16 +31,23 @@ const getCardStyles = (type: ICard["type"]) => {
     }
 }
 
-export interface IInteractiveCard extends ICard {
+export interface IInteractiveCard extends Partial<ICard> {
     discardFn?: (itemName: string) => void,
     playFn?: (itemName: string) => void,
     key?: string
 }
 
-const AntCard: FC<IInteractiveCard> = ({ unit, price, item_name = "deck", type, discardFn = (itemName: string) => {}, playFn = (itemName: string) => {}, key }) => {
+const AntCard: FC<IInteractiveCard> = ({
+    unit,
+    price,
+    item_name = "deck",
+    type = "deck",
+    discardFn = (itemName: string) => {},
+    playFn = (itemName: string) => {}
+}) => {
     const intl = useIntl()
 
-    const cardLabels: { [itemName: string] : ICard } = {
+    const cardLabels: { [itemName: string] : Partial<ICard> } = {
         "wall": {
             cardName: intl.formatMessage({ id: "cards.wall.name", defaultMessage: "Wall" }),
             message: <FormattedMessage id="cards.fence" defaultMessage="fence +{value}" values={{ value: 3 }} />
@@ -172,6 +179,7 @@ const AntCard: FC<IInteractiveCard> = ({ unit, price, item_name = "deck", type, 
         <Card
             onClick={() => playFn(item_name)}
             onContextMenu={handleCardRightClick}
+            data-testid={`ant_card.${item_name}`}
             sx={{
                 m: 0.5,
                 height: 195,
@@ -192,12 +200,14 @@ const AntCard: FC<IInteractiveCard> = ({ unit, price, item_name = "deck", type, 
                                     width: 20,
                                     height: 20
                                 }}
+                                data-testid={`ant_card.${item_name}.unit`}
                             />
                         }
                         action={
                             <Typography
                                 variant="body1"
                                 textAlign="center"
+                                data-testid={`ant_card.${item_name}.price`}
                                 sx={{
                                     mr: 1,
                                     mt: 0.25,
@@ -221,6 +231,7 @@ const AntCard: FC<IInteractiveCard> = ({ unit, price, item_name = "deck", type, 
                             mb: 1,
                             color: "#000"
                         }}
+                        data-testid={`ant_card.${item_name}.name`}
                     >
                         {cardLabels[item_name as keyof typeof cardLabels].cardName || ""}
                     </Typography>
@@ -228,6 +239,7 @@ const AntCard: FC<IInteractiveCard> = ({ unit, price, item_name = "deck", type, 
             }
             <CardMedia
                 component="img"
+                data-testid={`ant_card.${item_name}.avatar`}
                 image={`/cards/${item_name}.svg`}
                 sx={{
                     p: (item_name == "deck") ? 3 : 0,
@@ -241,6 +253,7 @@ const AntCard: FC<IInteractiveCard> = ({ unit, price, item_name = "deck", type, 
                 (!cardLabels[item_name as keyof typeof cardLabels]) ? null :
                 <CardContent>
                     <Typography
+                        data-testid="ant_card.description"
                         variant="body2" 
                         textAlign="center"
                         sx={{
