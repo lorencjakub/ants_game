@@ -1,0 +1,39 @@
+Začíná se s mravenci 2 a suroviny 5, hrad 30, hradba 10
+
+ČERVENÉ (stavitelé, cihly)
+Zeď: hradba +3 (1 cihly)
+Základy: hrad +2 (1 cihly)
+Škola: stavitelé +1 (8 cihly)
+Rezervy: hrad +8, hradba -4 (3 cihly)
+Hradba: hradba +22 (12 cihly)
+Povoz: hrad +8, hrad soupeře -4 (10 cihly)
+Věž: hrad +5 (5 cihly)
+Babylon: hrad +32 (39 cihly)
+Pevnost: hrad +20 (18 cihly)
+Obrana: hradba +6 (3 cihly)
+
+
+MODRÉ (mágové, krystaly)
+Čaruj cihly: cihly +8 (4 krystaly)
+Znič cihly: cihly soupeře -8 (4 krystaly)
+Čaruj krystaly: krystaly +8 (4 krystaly)
+Znič krystaly: krystaly soupeře -8 (4 krystaly)
+Čaruj zbraně: zbraně +8 (4 krystaly)
+Znič zbraně: zbraně soupeře -8 (4 krystaly)
+Drak: útok 25 (krystaly 21)
+Čaroděj: mágové +1 (8 krystaly)
+Skřítci: hrad +22 (22 krystaly)
+Kletba: vše +1 vše soupeře -1 (25 krystaly)
+
+
+ZELENÉ (vojáci, zbraně)
+Jezdec: útok 4 (2 zbraně)
+Střelec: útok 2 (1 zbraně)
+Sabotér: zásoby soupeře -4 (zbraně 12)
+Rytíř: útok 3 (2 zbraně) (Knight)
+Četa: útok 6 (4 zbraně)
+Zloděj: převod zásob soupeře 5
+Nábor: vojáci +1 (8 zbraní)
+Zteč: útok 12 (10 zbraně)
+SWAT: hrad soupeře 10 (18 zbraně)
+Smrtka: útok 32 (28 zbraně)

@@ -1,0 +1,84 @@
+[
+	{
+		"item_name": "conjure_bricks",
+		"price_unit": "crystals",
+		"price_amount": 4,
+		"bonus_unit": "bricks",
+		"bonus_amount": 8,
+		"count_in_deck": 12
+	},
+	{
+		"item_name": "crush_bricks",
+		"price_unit": "crystals",
+		"price_amount": 4,
+		"enemy_lost_unit": "bricks",
+		"enemy_lost_amount": -8,
+		"count_in_deck": 12
+	},
+	{
+		"item_name": "conjure_crystals",
+		"price_unit": "crystals",
+		"price_amount": 4,
+		"bonus_unit": "crystals",
+		"bonus_amount": 8,
+		"count_in_deck": 12
+	},
+	{
+		"item_name": "crush_crystals",
+		"price_unit": "crystals",
+		"price_amount": 4,
+		"enemy_lost_unit": "crystals",
+		"enemy_lost_amount": -8,
+		"count_in_deck": 12
+	},
+	{
+		"item_name": "conjure_weapons",
+		"price_unit": "crystals",
+		"price_amount": 4,
+		"bonus_unit": "weapons",
+		"bonus_amount": 8,
+		"count_in_deck": 12
+	},
+	{
+		"item_name": "crush_weapons",
+		"price_unit": "crystals",
+		"price_amount": 4,
+		"enemy_lost_unit": "weapons",
+		"enemy_lost_amount": -8,
+		"count_in_deck": 12
+	},
+	{
+		"item_name": "dragon",
+		"price_unit": "crystals",
+		"price_amount": 25,
+		"enemy_lost_unit": "attack",
+		"enemy_lost_amount": 25,
+		"count_in_deck": 6
+	},
+	{
+		"item_name": "sorcerer",
+		"price_unit": "crystals",
+		"price_amount": 8,
+		"bonus_unit": "mages",
+		"bonus_amount": 1,
+		"count_in_deck": 8
+	},
+	{
+		"item_name": "pixies",
+		"price_unit": "crystals",
+		"price_amount": 22,
+		"bonus_unit": "castle",
+		"bonus_amount": 22,
+		"count_in_deck": 6
+	},
+	{
+		"item_name": "curse",
+		"price_unit": "crystals",
+		"price_amount": 25,
+		"enemy_lost_unit": "all",
+		"enemy_lost_amount": -1,
+		"bonus_unit": "all",
+		"bonus_amount": 1,
+		"count_in_deck": 4
+	}
+]
