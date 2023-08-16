@@ -1,23 +1,32 @@
-from flask import Request, Response, jsonify
+from flask import Request, Response, jsonify, has_app_context
+import json
 from extensions import db
 from application.models import Rooms, Players, BuildingCards, SoldiersCards, MagicCards, Sources,\
     create_data_dict, get_table_by_tablename
 from .auth import get_saved_player
 from .error_handlers import CustomError
-from distinct_types import List, Dict
+from distinct_types import List, Dict, Tuple, Union
 import enum
 import random
 
 
-def check_room(request: Request) -> None:
-    if request.endpoint in ["main.create_room", "main.join_room"] or request.method == "OPTIONS":
+def check_room(request: Request) -> Union[None, Tuple[Rooms, Players]]:
+    if request.endpoint == "main.create_room":
         return
 
-    player = get_saved_player(request)
+    if request.endpoint == "main.join_room" and not request.headers.get("Token"):
+        return
+
+    if request.method == "OPTIONS":
+        return
+
+    player = get_saved_player(request.headers.get("Token"))
     room = player.get_player_room()
 
     if not room.active:
         raise CustomError("Room is not active anymore")
+
+    return room, player
 
 
 def init_room():
@@ -25,37 +34,36 @@ def init_room():
     host_player = Players.create(name="Player1", is_host=True, sources_id=sources.id)
 
     new_room = Rooms.create(player_on_turn=host_player.id)
-    new_room.create_deck()
     new_room.add_player(host_player)
-
-    init_cards = draw_cards(host_player, 10)
 
     return jsonify({
         "room": new_room.guid,
-        "token": host_player.token,
-        "cards": [
-            {
-                "item_name": c.item_name,
-                "unit": c.price_unit,
-                "price": c.price_amount,
-                "type": c.type
-            } for c in init_cards
-        ]
+        "token": host_player.token
     })
 
 
-def player_join_room_or_get_data(guid: str, request: Request):
+def player_join_room_or_get_data(guid: str, request: Request | None, token: str | None = None):
     room = Rooms.query.filter_by(guid=guid).first()
+
     if not room:
         raise CustomError("Invalid room")
 
-    token = request.headers.get("Token")
+    if len(room.cards_in_deck) == 0:
+        room.create_deck()
+
+    if request:
+        token = request.headers.get("Token")
 
     if token:
         player_in_room = next((p for p in room.players if p.token == token), None)
 
         if player_in_room:
-            return jsonify({
+            cards = player_in_room.cards
+
+            if not player_in_room.cards:
+                cards = draw_cards(player_in_room, 10)
+
+            return {
                 "room": room.guid,
                 "token": token,
                 "cards": [
@@ -64,18 +72,27 @@ def player_join_room_or_get_data(guid: str, request: Request):
                         "unit": c.price_unit,
                         "price": c.price_amount,
                         "type": c.type
-                    } for c in player_in_room.cards
+                    } for c in cards
                 ]
-            })
+            }
 
-    sources = Sources.create()
-    guest_player = Players.create(name="Player2", sources_id=sources.id)
-    room.add_player(guest_player)
-    init_cards = draw_cards(guest_player, 10)
+    player = None
+    init_cards = []
 
-    return jsonify({
+    if room.is_full:
+        player = Players.query.filter_by(token=token).first()
+        init_cards = player.cards
+
+    else:
+        sources = Sources.create()
+        player = Players.create(name="Player2", is_host=True, sources_id=sources.id)
+
+        room.add_player(player)
+        init_cards = draw_cards(player, 10)
+
+    return {
         "room": room.guid,
-        "token": guest_player.token,
+        "token": player.token,
         "cards": [
             {
                 "item_name": c.item_name,
@@ -84,11 +101,11 @@ def player_join_room_or_get_data(guid: str, request: Request):
                 "type": c.type
             } for c in init_cards
         ]
-    })
+    }
 
 
 def player_leave_room(request: Request) -> Response:
-    player = get_saved_player(request)
+    player = get_saved_player(request.headers.get("Token"))
     player_room = player.get_player_room()
 
     if not player_room:
@@ -99,11 +116,7 @@ def player_leave_room(request: Request) -> Response:
     return jsonify({})
 
 
-def make_switch_turn(guid: str) -> Response:
-    room = Rooms.query.filter_by(guid=guid).first()
-    if not room:
-        raise CustomError("Invalid room")
-
+def make_switch_turn(room: Rooms) -> None:
     current_player_id = room.player_on_turn
     new_player_id = room.switch_turn().player_on_turn
 
@@ -113,11 +126,9 @@ def make_switch_turn(guid: str) -> Response:
     new_player = Players.get_by_id(new_player_id)
     new_player.sources.grow_sources()
 
-    return jsonify({"player_on_turn": new_player.name})
-
 
 def draw_new_card(request: Request):
-    player = get_saved_player(request)
+    player = get_saved_player(request.headers.get("Token"))
     new_player_cards = draw_cards(player)
 
     return jsonify({"new_cards": [c.item_name for c in new_player_cards]})
@@ -138,12 +149,12 @@ def draw_cards(player: Players, count: int = 1) -> List[BuildingCards | Soldiers
     return new_cards
 
 
-def discard_card(request: Request):
+def discard_card(request: Request, discarded: bool = False):
     card_name = request.json.get("card_name")
     if not card_name:
         raise CustomError("Missing card")
 
-    player = get_saved_player(request)
+    player = get_saved_player(request.headers.get("Token"))
     card = next((c for c in player.cards if c.item_name == card_name), None)
 
     if not card:
@@ -152,7 +163,7 @@ def discard_card(request: Request):
     remove_card_from_deck({"player": player.id}, [card], lambda x: f'player_{x}')
     draw_cards(player)
 
-    make_switch_turn(player.get_player_room().guid)
+    make_switch_turn(player.get_player_room())
 
     return jsonify({
         "cards": [
@@ -167,13 +178,15 @@ def discard_card(request: Request):
             "item_name": card.item_name,
             "unit": card.price_unit,
             "price": card.price_amount,
-            "type": card.type
-        }
+            "type": card.type,
+            "discarded": discarded
+        },
+        "on_turn": player.get_player_room().player_on_turn
     })
 
 
 def use_card_from_hand(request: Request) -> Response:
-    current_player = get_saved_player(request)
+    current_player = get_saved_player(request.headers.get("Token"))
     card_name = request.json.get("card_name")
 
     if not card_name:
@@ -194,7 +207,6 @@ def use_card_from_hand(request: Request) -> Response:
             winner = next((plr for plr in new_state["state"].keys() if p != plr), None)
 
     if winner:
-        deactivate_room(current_player.get_player_room().guid, request, winner)
         return jsonify({"winner": winner})
 
     remove_card_from_deck({"player": current_player.id}, [card], lambda x: f'player_{x}')
@@ -211,7 +223,7 @@ def use_card_from_hand(request: Request) -> Response:
         ]
     })
 
-    make_switch_turn(current_player.get_player_room().guid)
+    make_switch_turn(current_player.get_player_room())
 
     new_player_on_turn = current_player.get_player_room().get_enemy(current_player)
     new_state["state"][new_player_on_turn.token] = create_data_dict(new_player_on_turn.sources)
@@ -343,9 +355,9 @@ def apply_cards_effect(player, card_data, apply_enemy_effects: bool = False) -> 
     return new_state
 
 
-def deactivate_room(guid: str, request: Request, winner: str = None) -> Response:
+def deactivate_room(guid: str, request: Request, winner: str = None, player_instance: Players = None) -> Response:
     room = Rooms.query.filter_by(guid=guid).first()
-    player = get_saved_player(request)
+    player = player_instance or get_saved_player(request.headers.get("Token"))
 
     if not room:
         raise CustomError("Invalid room")
@@ -354,11 +366,12 @@ def deactivate_room(guid: str, request: Request, winner: str = None) -> Response
         raise CustomError("Only host player is able to deactivate room")
 
     room.update(**{"active": False, "winner": winner} if winner else {"active": False})
-    return jsonify({})
+
+    if "socket.io" not in request.url:
+        return jsonify({})
 
 
-def get_current_state_in_room(data):
-    guid = data.get("guid")
+def get_current_state_in_room(guid: str):
     room = Rooms.query.filter_by(guid=guid).first()
     state = {}
 
@@ -368,4 +381,25 @@ def get_current_state_in_room(data):
         for p in players:
             state[p.token] = create_data_dict(p.sources)
 
+    player_on_turn = Players.query.get(room.player_on_turn)
+
+    state.update({"on_turn": player_on_turn.token})
+
     return state
+
+
+def check_room_and_player_for_ws_events(token: str) -> Tuple[Rooms, Players]:
+    try:
+        player = get_saved_player(token)
+        room = player.get_player_room()
+
+        if not room.active:
+            raise CustomError("Room is not active anymore")
+
+        return room, player
+
+    except Exception as e:
+        if isinstance(e, CustomError):
+            raise e
+
+        raise ConnectionRefusedError("Unknown player or room")

@@ -229,6 +229,7 @@ class Rooms(PkModel):
     player_on_turn = db.Column(db.Integer, nullable=False, default=1)
     winner = db.Column(db.String(32), nullable=True)
     active = db.Column(db.Boolean, nullable=False, default=True)
+    is_full = db.Column(db.Boolean, default=False)
 
     def __str__(self) -> str:
         if not self.active:
@@ -249,6 +250,9 @@ class Rooms(PkModel):
         if not kwargs.get("guid"):
             kwargs["guid"] = str(uuid.uuid4().hex)
 
+        if kwargs.get("players"):
+            kwargs["player_on_turn"] = kwargs.get("players")[0].id
+
         return super().create(**kwargs)
 
     @hybrid_property
@@ -267,21 +271,21 @@ class Rooms(PkModel):
         return cards_in_deck
 
     def switch_turn(self):
-        if len(self.players) != 2:
+        if not self.is_full:
             raise CustomError("Room is not full")
 
         new_player_on_turn = next((p for p in self.players if p.id != self.player_on_turn), None)
         return self.update(True, player_on_turn=new_player_on_turn.id)
 
     def add_player(self, p: Players):
-        if len(self.players) == 2:
+        if self.is_full:
             raise CustomError("This room is already full")
 
         if p in self.players:
             raise CustomError("Player is already in this room")
 
         self.players.append(p)
-        return self.update(True, players=self.players)
+        return self.update(True, players=self.players, is_full=bool(len(self.players) == 2))
 
     def remove_player(self, p: Players):
         if p not in self.players:

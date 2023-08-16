@@ -2,9 +2,9 @@ from flask import Request
 from application.models import Players
 
 
-def get_saved_player(request: Request) -> Players | None:
+def get_saved_player(token: str) -> Players | None:
     player = None
-    token = request.headers.get("Token")
+
     if token:
         player = Players.query.filter_by(token=token).first()
 

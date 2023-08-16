@@ -2,7 +2,6 @@ import React from "react"
 import {
     render,
     screen,
-    act,
     fireEvent, 
     waitFor,
     testMessagesGetter,
@@ -46,8 +45,7 @@ describe("Test of HomePage render and functionalities", () => {
     test("Menu generator's site redirect button", async () => {
         jest.spyOn(ApiClient, "createRoom").mockResolvedValue({
             room: TEST_CONFIG.DEFAULT_ROOM_GUID,
-            token: TEST_CONFIG.DEFAULT_PLAYER_TOKEN,
-            cards: []
+            token: TEST_CONFIG.DEFAULT_PLAYER_TOKEN
         })
 
         render(
@@ -58,7 +56,7 @@ describe("Test of HomePage render and functionalities", () => {
     
         const button = screen.getByTestId("pages.homepage.new_room_button")?.querySelector("button")
         if (!button) throw Error("Button not found")
-        waitFor(() => fireEvent.click(button as HTMLButtonElement))
+        fireEvent.click(button as HTMLButtonElement)
         await waitFor(() => expect(window.location.pathname).toEqual(`/room/${TEST_CONFIG.DEFAULT_ROOM_GUID}`))
         expect(sessionStorage.getItem("Token")).toEqual(TEST_CONFIG.DEFAULT_PLAYER_TOKEN)
     })

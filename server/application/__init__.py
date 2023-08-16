@@ -12,14 +12,14 @@ import json
 from distinct_types import Tuple
 
 BE_ENV = os.environ.get("BE_ENV")
-socketio = SocketIO(logger=True, engineio_logger=True)
+socketio = SocketIO(ping_timeout=120, logger=True, engineio_logger=True, manage_session=False)
 
 
 def create_app(with_secutiry: bool = True, with_sockets: bool = False) -> Flask | Tuple[Flask, SocketIO]:
     """Create application factory
     """
     config_object = f'config_{BE_ENV if BE_ENV is not None else "dev"}'
-    app = Flask("nutri_manager")
+    app = Flask("ants_game")
     app.config.from_object(config_object)
 
     cors_settings = set_cors()

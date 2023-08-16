@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from "react"
+import { FC, ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useSnackbar } from "notistack"
 import { useErrors } from "../Errors"

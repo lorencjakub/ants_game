@@ -7,7 +7,8 @@ export const TEST_CARD_WALL: ICard = {
     price: 1,
     item_name: "wall",
     type: "building",
-    message: "fence +3"
+    message: "fence +3",
+    cardName: "Wall"
 }
 
 export const TEST_CARD_TOWER: ICard = {
@@ -15,7 +16,8 @@ export const TEST_CARD_TOWER: ICard = {
     price: 1,
     item_name: "tower",
     type: "building",
-    message: "castle +5"
+    message: "castle +5",
+    cardName: "Tower"
 }
 
 export const TEST_CARD_ARCHER: ICard = {
@@ -23,7 +25,8 @@ export const TEST_CARD_ARCHER: ICard = {
     price: 1,
     item_name: "archer",
     type: "soldiers",
-    message: "attack +2"
+    message: "attack +2",
+    cardName: "Archer"
 }
 
 export const TEST_CARD_SORCERER: ICard = {
@@ -31,7 +34,8 @@ export const TEST_CARD_SORCERER: ICard = {
     price: 8,
     item_name: "sorcerer",
     type: "magic",
-    message: "mages +1"
+    message: "mages +1",
+    cardName: "Sorcerer"
 }
 
 export const TEST_SOURCES: ISources = {

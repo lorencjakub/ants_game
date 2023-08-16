@@ -33,10 +33,10 @@ const Page: FC<{}> = () => {
         <div
             data-testid="containers.layout"
             style={{
-            display: 'flex',
-            flexDirection: "column", 
-            margin: 30,
-            height: "calc(100vh - 60px)"
+                display: 'flex',
+                flexDirection: "column", 
+                margin: 30,
+                height: "calc(100vh - 60px)"
             }}
         >
             <Suspense fallback={<Loading />}>

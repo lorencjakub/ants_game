@@ -1,6 +1,5 @@
 from extensions import *
 from application import create_app, socketio
-
 import os
 import sys
 

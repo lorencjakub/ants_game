@@ -68,7 +68,7 @@ const AppContainer: FC<{}> = () => {
                                             <Loading />
                                         </div>
                                     }>
-                                        {<Layout />}
+                                        <Layout />
                                     </Suspense>
                                 </PlayerCardsProvider>
                             </QueryClientProvider>

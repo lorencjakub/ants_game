@@ -1,15 +1,25 @@
+import { ReactJSXElement } from "@emotion/react/types/jsx-namespace"
+
+
 export interface IRoomInfoResponse {
     room: string,
+    token: string
+}
+
+export type TSocketJoinRoomResponse = {
     token: string,
-    cards: ICard[]
+    cards: ICard[],
+    on_turn: string
+} & {
+    [playerToken: string]: ISources
 }
 
 export interface ICard {
     unit: "bricks" | "weapons" | "crystals",
     price: number,
     item_name: string,
-    cardName?: string,
-    message?: string | JSX.Element,
+    cardName: string | ReactJSXElement,
+    message: string | ReactJSXElement,
     type: "building" | "soldiers" | "magic" | "deck"
 }
 

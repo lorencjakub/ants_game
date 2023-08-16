@@ -1,31 +1,32 @@
-import React, { FC, useEffect, useState, useReducer } from 'react'
+import { FC, useEffect, useState, useReducer, useCallback, memo, useMemo, Suspense } from 'react'
 import {
     Button,
     Paper,
     Typography,
     Grid,
-    Stack,
-    Avatar
+    Backdrop
 } from "@mui/material"
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import ApiClient from '../../base/utils/Axios/ApiClient'
 import {
-    IRoomInfoResponse,
     ITurnResponse,
-    IPlayerSourceState,
     ISources,
-    IWinTurnResponse
+    IWinTurnResponse,
+    TSocketJoinRoomResponse
 } from '../../base/utils/Axios/types'
 import { AxiosError } from 'axios'
 import { useIntl, FormattedMessage } from "react-intl"
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import Card from "../components/Card"
 import { ICard } from '../../base/utils/Axios/types'
 import { usePlayerCards } from '../Providers/PlayerCards'
-import { io, Socket } from "socket.io-client"
 import Sources from '../components/Sources'
 import Loading from '../../base/components/Loading'
-import { EventNames } from '../../base/utils/SocketIO/eventNames'
+import { ChatWindow } from '../components/ChatWindow'
+import { EventNames, gameSocket, WSError } from '../../base/Providers/SocketIo'
+import { ReactJSXElement } from '@emotion/react/types/jsx-namespace'
+import { useTheme } from '@mui/material/styles'
+import { useSnackbar } from 'notistack'
 
 
 export interface IRoomStatus {
@@ -38,18 +39,59 @@ const initRoomStatus: IRoomStatus = {
     winner: undefined
 }
 
-const roomStatusReducer = (data: IRoomStatus, action: IRoomStatus) => {
+const roomStatusReducer = (data: Partial<IRoomStatus>, action: Partial<IRoomStatus>) => {
     return { ...data, ...action }
 }
 
-var socket: Socket
+const RoomInfo: FC<{ message: string | ReactJSXElement }> = ({ message }) => {
+    const intl = useIntl()
+    const navigate = useNavigate()
+
+    return (
+        <Grid
+            container
+            direction="column"
+            alignItems="center"
+        >
+            <Typography
+                color="text.primary"
+                variant="h5"
+                textAlign="center"
+                sx={{
+                    mb: 2
+                }}
+            >
+                {message}
+            </Typography>
+            <Button
+                variant="contained"
+                onClick={() => {
+                    sessionStorage.setItem("Token", "")
+                    navigate("/")
+                }}
+                sx={{
+                    backgroundColor: "text.primary",
+                    maxWidth: 250
+                }}
+            >
+                {intl.formatMessage({ id: "processing_backdrop_message.lock_button", defaultMessage: "Leave battlefield" })}
+            </Button>
+        </Grid>
+    )
+}
 
 const Room: FC<{}> = () => {
     const { guid } = useParams()
     const intl = useIntl()
+    const theme = useTheme()
+    const { enqueueSnackbar } = useSnackbar()
+
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [creatingRoom, setCreatingRoom] = useState<boolean>(true)
     const [myState, setMyState] = useState<ISources | null>(null)
     const [enemyState, setEnemyState] = useState<ISources | null>(null)
-    const [roomStatus, setRoomStatus] = useReducer<(data: IRoomStatus, action: IRoomStatus) => IRoomStatus>(roomStatusReducer, initRoomStatus)    //TODO dopsat onError setnutí na true
+    const [onTurn, setOnTurn] = useState<string>("")
+    const [roomStatus, setRoomStatus] = useReducer<(data: Partial<IRoomStatus>, action: Partial<IRoomStatus>) => Partial<IRoomStatus>>(roomStatusReducer, initRoomStatus)    //TODO dopsat onError setnutí na true
     const {
         playerCards = [],
         setPlayerCards = (data: ICard[], eventName: string) => {},
@@ -58,37 +100,16 @@ const Room: FC<{}> = () => {
     } = usePlayerCards()
 
     const {
-        refetch: joinRoom,
-		isFetching: collectingRoomData
-    } = useQuery<IRoomInfoResponse, AxiosError>(
-        ["join_room_query"],
-        async () => await ApiClient.joinRoom(guid),
-        {
-            enabled: false,
-            retry: 0,
-            onSuccess: (res) => {
-                sessionStorage.setItem("Token", res.token)
-                setPlayerCards(res.cards, "joinRoom")
-            },
-            onError: (e) => {
-                const errData: any = e?.response?.data
-                if (errData && errData.message && (errData.message == "Room is not active anymore")) setRoomStatus({ active: false })
-            }
-        }
-    )
-
-    const {
         mutate: playCard
     } = useMutation<ITurnResponse | IWinTurnResponse, AxiosError, string>({
         mutationFn: async (item_name) => await ApiClient.play(item_name),
         onSuccess: (res: any) => {
             if (res.winner) {
-                socket.emit(EventNames.SERVER_WINNER, res.winner)
-                setRoomStatus({ active: false, winner: res.winner })
+                gameSocket.emit(EventNames.SERVER_WINNER, res.winner, sessionStorage.getItem("Token") || "")
                 return 
             }
 
-            socket.emit(EventNames.SERVER_STATE_UPDATE, { discarded: res.discarded, guid: guid, action: "play" })
+            gameSocket.emit(EventNames.SERVER_STATE_UPDATE, { discarded: res.discarded, guid: guid, action: "play" }, sessionStorage.getItem("Token"))
             setPlayerCards(res.cards, "playCard")
         }
     })
@@ -96,59 +117,84 @@ const Room: FC<{}> = () => {
     const {
         mutate: discardCard
     } = useMutation<ITurnResponse, AxiosError, string>({
+        mutationKey: ["discard_card_request"],
         mutationFn: async (item_name) => await ApiClient.discard(item_name),
         onSuccess: (res: any) => {
+            gameSocket.emit(EventNames.SERVER_STATE_UPDATE, { discarded: res.discarded, guid: guid, action: "discard" }, sessionStorage.getItem("Token"))
             setPlayerCards(res.cards, "discardCard")
-            socket.emit(EventNames.SERVER_STATE_UPDATE, { discarded: res.discarded, guid: guid, action: "discard" })
         }
     })
 
-    useEffect(() => {        
-        joinRoom()
+    const memoizedDiscardCard = useCallback(discardCard, [])
+    const memoizedPlayCard = useCallback(playCard, [])
 
-        socket = io(
-            String(process.env.API_BASE_URL),
-            {
-                transports: ["websocket"],
-                query: { guid: guid }
-            }
-        )
+    useEffect(() => {
+        if (!gameSocket.connected) gameSocket.connect()
 
-        socket.on(EventNames.ENTER_ROOM, (data: { [playerToken: string]: ISources }) => {
-            if (!sessionStorage.getItem("Token")) return
+        gameSocket.on(EventNames.ERROR, (error: WSError) => {
+            if ((error.event == EventNames.JOIN_ROOM) && (error.message == "Room is not active anymore")) return setRoomStatus({ active: false })
+            
+            enqueueSnackbar(error.message, { variant:"error" })
+        })
+
+        gameSocket.on(EventNames.JOIN_ROOM, (data: TSocketJoinRoomResponse | any) => {
+            if (data.cards) setPlayerCards(data.cards, "createRoom")
+
+            if (data.message && ((data.message as string) == "Room is not active anymore")) setRoomStatus({ active: false })
+
+            setCreatingRoom(false)
+            setSearchParams({})
+        })
+
+        gameSocket.on(EventNames.SERVER_STATE_UPDATE, (data: any) => {
             const myToken = sessionStorage.getItem("Token")
-            const enemyToken = Object.keys(data).filter((k) => k !== sessionStorage.getItem("Token") && k != "data")[0]
+            if (!sessionStorage.getItem("Token")) return
 
+            const enemyToken = Object.keys(data).filter((k) => ![myToken, "discarded", "on_turn"].includes(k))[0]
+            
             if (data[String(myToken)]) setMyState(data[String(myToken)])
             if (data[String(enemyToken)]) setEnemyState(data[String(enemyToken)])
-        })
-
-        socket.on(EventNames.CLIENT_STATE_UPDATE, (data: any) => {
-            if (!sessionStorage.getItem("Token")) return
-            if ((Object.keys(data).length == 1) && (Object.keys(data)[0] == "discarded")) return setDiscardedCard(data.discarded)
             
-            const myToken = sessionStorage.getItem("Token")
-            const enemyToken = Object.keys(data).filter((k) => k !== sessionStorage.getItem("Token") && k != "discarded")[0]
-            
-            if (data[String(myToken)]) setMyState(data[String(myToken)])
-            if (data[String(enemyToken)]) setEnemyState(data[String(enemyToken)])
+            if (data.on_turn) setOnTurn(data.on_turn)
+            if (data.discarded) setDiscardedCard(data.discarded)
         })
 
-        socket.on(EventNames.CLIENT_WINNER, (token: any) => {
-            alert(`Player ${token} wins!`)
-            console.log(`Player ${token} wins!`)
+        gameSocket.on(EventNames.CLIENT_WINNER, (winner_name: any) => {
+            setRoomStatus({ winner: winner_name })
         })
 
-        socket.on(EventNames.DISCONNECT, (data) => {
+        gameSocket.on(EventNames.DISCONNECT, (data) => {
             console.log(data)
         })
 
+        gameSocket.emit(EventNames.JOIN_ROOM, guid, sessionStorage.getItem("Token") || "")
+
         return () => {
-            socket.disconnect()
+            gameSocket.disconnect()
         }
     }, [])
 
     return (
+        (Boolean(roomStatus.winner) || !roomStatus.active)
+        ?
+        <Backdrop
+            open={true}
+            style={{
+                backgroundColor: theme.palette.background.paper,
+                opacity: 0.98,
+                zIndex: 5
+            }}
+        >
+            <RoomInfo
+                message={
+                    Boolean(roomStatus.winner) ?
+                    <FormattedMessage id="processing_backdrop_message.winner" defaultMessage="{winner} is a winner!" values={{ winner: roomStatus.winner }} />
+                    :
+                    intl.formatMessage({ id: "processing_backdrop_message.locked_room", defaultMessage: "This room is locked and inactive" })
+                }
+            />
+        </Backdrop>
+        :
         <Paper
             elevation={0}
             sx={{ m: 2, p: 2 }}
@@ -165,7 +211,8 @@ const Room: FC<{}> = () => {
                     overflow: 'hidden'
                 }}
                 sx={{
-                    backgroundColor: "background.default"
+                    backgroundColor: "background.default",
+                    p: 1
                 }}
             >
                 <Grid
@@ -173,45 +220,49 @@ const Room: FC<{}> = () => {
                     container
                     spacing={1}
                     justifyContent="center"
-                    alignItems="center"
+                    alignItems="start"
                     direction="row"
                     style={{
                         display: 'flex',
                         overflow: 'hidden'
                     }}
                     sx={{
-                        backgroundColor: "green",
                         minHeight: 300,
                         m: 0,
                         p: 0
                     }}
                 >
                     <Grid
-                        data-testid="pages.room.player_one_panel"
+                        data-testid="pages.room.my_panel"
                         item
-                        xs={4}
+                        xs={2}
                         justifyContent="center"
-                        alignItems="center"
+                        alignItems="start"
                         style={{
                             display: 'flex',
                             overflow: 'hidden'
                         }}
                         sx={{
-                            backgroundColor: "#fff",
                             minHeight: 300,
                             m: 0,
-                            p: 0
+                            p: 0,
+                            border: "solid 2px",
+                            borderRadius: 3,
+                            borderColor: theme.palette.text.primary
                         }}
                     >
                         {
                             (myState) ?
-                            <Sources player="Player1" sources={myState} />
+                            <Sources
+                                title={intl.formatMessage({ id: "pages.room.player_panel.my_sources", defaultMessage: "My sources" })}
+                                sources={myState}
+                            />
                             :
                             <Typography
+                                color="text.primary"
                                 variant="h4"
                                 textAlign="end"
                                 sx={{
-                                    color: "#000",
                                     mb: 2
                                 }}
                             >
@@ -222,54 +273,134 @@ const Room: FC<{}> = () => {
                     <Grid
                         data-testid="pages.room.battlefield"
                         item
-                        xs={4}
+                        direction="row"
+                        xs={8}
                         justifyContent="center"
-                        alignItems="center"
+                        alignItems="start"
                         style={{
                             display: 'flex',
                             overflow: 'hidden'
                         }}
                         sx={{
-                            backgroundColor: "red",
                             minHeight: 300,
                             m: 0,
                             p: 0
                         }}
                     >
-                        <Card />
-                        {(Object.keys(discarded).length === 0) ? null : <Card { ...discarded } />}
+                        <Grid
+                            item
+                            xs={8}
+                            direction="column"
+                            justifyContent="center"
+                            sx={{
+                                ml: 4
+                            }}
+                        >
+                            <Typography
+                                variant="h5"
+                                sx={{
+                                    mb: 2
+                                }}
+                            >
+                                {intl.formatMessage({ id: "chat_window.title", defaultMessage: "Battle Chat" })}
+                            </Typography>
+                            <ChatWindow />
+                        </Grid>
+                        <Grid
+                            item
+                            xs={4}
+                            direction="column"
+                            justifyContent="center"
+                        >
+                            <Typography
+                                variant="h5"
+                                textAlign="center"
+                                sx={{
+                                    mb: 2
+                                }}
+                            >
+                                <FormattedMessage
+                                    id="pages.room.battlefield.on_turn"
+                                    defaultMessage="On turn: {player}"
+                                    values={{
+                                        player: (
+                                            (onTurn === sessionStorage.getItem("Token")) ?
+                                            intl.formatMessage({ id: "pages.room.battlefield.on_turn.you", defaultMessage: "You" })
+                                            :
+                                            intl.formatMessage({ id: "pages.room.battlefield.on_turn.enemy", defaultMessage: "Enemy" })
+                                        )
+                                    }}
+                                />
+                            </Typography>
+                            <Grid
+                                container
+                                direction="row"
+                                justifyContent="center"
+                            >
+                                <Card sx={{ mt: 0 }} />
+                                {(Object.keys(discarded).length === 0) ? null : <Card { ...discarded } sx={{ mt: 0 }} />}
+                            </Grid>
+                        </Grid>
                     </Grid>
                     <Grid
-                        data-testid="pages.room.player_two_panel"
+                        data-testid="pages.room.enemy_panel"
                         item
-                        xs={4}
+                        xs={2}
                         justifyContent="center"
-                        alignItems="center"
+                        alignItems={(enemyState) ? "start" : undefined}
                         style={{
                             display: 'flex',
                             overflow: 'hidden'
                         }}
                         sx={{
-                            backgroundColor: "blue",
                             minHeight: 300,
                             m: 0,
-                            p: 0
+                            p: 0,
+                            border: "solid 2px",
+                            borderRadius: 3,
+                            borderColor: theme.palette.text.primary
                         }}
                     >
                         {
                             (enemyState) ?
-                            <Sources player="Player2" sources={enemyState} />
+                            <Sources
+                                title={intl.formatMessage({ id: "pages.room.player_panel.enemy_sources", defaultMessage: "Enemy's sources" })}
+                                sources={enemyState}
+                            />
                             :
-                            <Typography
-                                variant="h4"
-                                textAlign="end"
-                                sx={{
-                                    color: "#000",
-                                    mb: 2
-                                }}
+                            <Grid
+                                container
+                                direction="column"
+                                justifyContent="center"
+                                alignContent="center"
                             >
-                                {intl.formatMessage({ id: "pages.room.player_panel.missing_data", defaultMessage: "No data available" })}
-                            </Typography>
+                                <Typography
+                                    variant="h5"
+                                    textAlign="end"
+                                    sx={{
+                                        color: "#fff",
+                                        mb: 2
+                                    }}
+                                >
+                                    {intl.formatMessage({ id: "pages.room.player_panel.missing_data", defaultMessage: "No data available" })}
+                                </Typography>
+                                <Button
+                                    variant="contained"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(String(window.location).replace("room", "invitation"))
+
+                                        enqueueSnackbar(
+                                            intl.formatMessage({ id: "pages.room.invite_link_copied", defaultMessage: "Invite link copied!" }),
+                                            {
+                                                variant: "success"
+                                            }
+                                        )
+                                    }}
+                                    sx={{ backgroundColor: "text.primary" }}
+                                >
+                                    {intl.formatMessage({ id: "pages.room.player_panel.invite_player", defaultMessage: "Invite Player" })}
+                                </Button>
+                            </Grid>
                         }
                     </Grid>
                 </Grid>
@@ -282,34 +413,63 @@ const Room: FC<{}> = () => {
                     direction="row"
                     style={{
                         display: 'flex',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
                     }}
                     sx={{
                         backgroundColor: "background.default",
                         height: 200,
                         m: 0,
-                        p: 0
+                        mt: 10,
+                        p: 0,
+                        position: "relative"
                     }}
                 >
-
+                    <Backdrop
+                        open={!(roomStatus.winner) && !creatingRoom && (playerCards.length != 0) && (onTurn !== sessionStorage.getItem("Token"))}
+                        style={{
+                            position: "absolute",
+                            backgroundColor: theme.palette.background.paper,
+                            opacity: 0.9,
+                            zIndex: 100
+                        }}
+                    >
+                        <Typography
+                            color="text.primary"
+                            variant="body1"
+                            sx={{
+                                backgroundColor: "#000",
+                                p: 2,
+                                borderRadius: 3,
+                                border: "solid 3px",
+                                borderColor: "text.primary"
+                            }}
+                        >
+                            {intl.formatMessage({ id: "pages.room.card_panel.waiting_backdrop", defaultMessage: "Spying enemy's moves..." })}
+                        </Typography>
+                    </Backdrop>
                     {playerCards.map((data) => {
                         const randomSuffix = (Math.random() + 1).toString(36).substring(2)
                         const key = `${data.unit}_${data.price}_${data.item_name}_${randomSuffix}`
 
-                        return <Card { ...data } discardFn={discardCard} playFn={playCard} key={key} />
+                        return <Card { ...data } discardFn={memoizedDiscardCard} playFn={memoizedPlayCard} key={key} />
                     })}
                 </Grid>
             </Grid>
-{/*             {(myState && !collectingRoomData) ? null :
+            {(!creatingRoom) ? null :
                 <Loading
-                    message={intl.formatMessage({ id: "processing_backdrop_message.loading_data", defaultMessage: "Loading data..." })}
+                    message={
+                        (searchParams.get("creating")) ?
+                        intl.formatMessage({ id: "processing_backdrop_message.creating_room", defaultMessage: "Room is creating..." })
+                        :
+                        intl.formatMessage({ id: "processing_backdrop_message.", defaultMessage: "Connecting to room..." })
+                    }
                     sx={{
                         backgroundColor: "background.default",
                         opacity: 0,
                         zIndex: 5
                     }}
                 />
-            } */}
+            }
             {(roomStatus.active) ? null :
                 <Loading
                     spinner={<FormattedMessage id="processing_backdrop_message.locked_room" defaultMessage="This room is locked and inactive" />}

@@ -1,4 +1,4 @@
-import { EventNames } from "../base/utils/SocketIO/eventNames"
+import { EventNames } from "../base/Providers/SocketIo"
 
 
 var MOCKED_SOCKETIO_EVENTS: { [eventName: string]: ((...args: any) => void)[] } = {}

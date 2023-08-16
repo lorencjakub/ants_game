@@ -1,25 +1,20 @@
-import React, { useEffect } from "react"
+import React from "react"
 import {
     render,
     screen,
-    act,
     fireEvent,
     waitFor,
-    TEST_CONFIG
 } from "../testSetup"
 import {
     TEST_CARD_WALL,
     TEST_CARD_TOWER,
     TEST_CARD_ARCHER,
-    TEST_SOURCES,
     TEST_CARD_SORCERER
 } from "../MockedApiValues"
 import { ICard } from "../../base/utils/Axios/types"
 import AntCard from "../../app/components/Card"
-import Room from "../../app/pages/Room"
 import { checkRenderedCard } from "../testFunctions"
 import { usePlayerCards } from "../../app/Providers/PlayerCards"
-import { PlayerCardsProvider } from "../../app/Providers/PlayerCards"
 import { Button } from "@mui/material"
 
 

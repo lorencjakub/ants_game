@@ -449,9 +449,10 @@ class GameFunctions(CustomTestCase):
 
             expected_data = {
                 "TestToken1": MOCKED_SOURCES,
-                "TestToken2": sources_two
+                "TestToken2": sources_two,
+                "on_turn": p_one.name
             }
 
-            res = get_current_state_in_room({"guid": r.guid})
+            res = get_current_state_in_room(r.guid)
 
             assert res == expected_data

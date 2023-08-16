@@ -22,7 +22,7 @@ import {
 } from "../../base/utils/Axios/types"
 import { checkRenderedCard } from "../testFunctions"
 import { socket, serverSocket, MOCKED_SOCKETIO_EVENTS } from "../MockedSocketIO"
-import { EventNames } from "../../base/utils/SocketIO/eventNames"
+import { EventNames } from "../../base/Providers/SocketIo"
 
 
 function getSourcesWithIncrement(sources: ISources, increment: number = 1): ISources {
@@ -53,8 +53,7 @@ async function checkCardsInPlayerHand(cards: ICard[], discarded?: ICard["item_na
 async function renderFullRoom(cards: ICard[])  {
     jest.spyOn(ApiClient, "joinRoom").mockResolvedValue({
         room: TEST_CONFIG.DEFAULT_ROOM_GUID,
-        token: TEST_CONFIG.DEFAULT_PLAYER_TOKEN,
-        cards: cards
+        token: TEST_CONFIG.DEFAULT_PLAYER_TOKEN
     })
 
     render(<Room />)
@@ -110,7 +109,7 @@ describe(("Room init render"), () => {
         await renderFullRoom([])
 
         sessionStorage.clear()
-        act(() => serverSocket.emit(EventNames.ENTER_ROOM, DEFAULT_PLAYERS_STATES))
+        act(() => serverSocket.emit(EventNames.JOIN_ROOM, DEFAULT_PLAYERS_STATES))
 
         await waitFor(() => checkStates())
     })
@@ -126,7 +125,7 @@ describe(("Room init render"), () => {
 
         await renderFullRoom(cards)
 
-        act(() => serverSocket.emit(EventNames.ENTER_ROOM, DEFAULT_PLAYERS_STATES))
+        act(() => serverSocket.emit(EventNames.JOIN_ROOM, DEFAULT_PLAYERS_STATES))
         await waitFor(() => checkStates(2))
     })
 })
@@ -165,7 +164,7 @@ describe(("Game functionalities"), () => {
 
         await renderFullRoom(cards)
 
-        act(() => serverSocket.emit(EventNames.ENTER_ROOM, DEFAULT_PLAYERS_STATES))
+        act(() => serverSocket.emit(EventNames.JOIN_ROOM, DEFAULT_PLAYERS_STATES))
         await waitFor(() => checkStates(2))
 
         const wallCard = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
@@ -232,7 +231,7 @@ describe(("Game functionalities"), () => {
 
         await renderFullRoom(cards)
 
-        act(() => serverSocket.emit(EventNames.ENTER_ROOM, DEFAULT_PLAYERS_STATES))
+        act(() => serverSocket.emit(EventNames.JOIN_ROOM, DEFAULT_PLAYERS_STATES))
         await waitFor(() => checkStates(2))
 
         const wallCard = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)

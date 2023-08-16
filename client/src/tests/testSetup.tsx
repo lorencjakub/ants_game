@@ -11,7 +11,7 @@ import { enMessages } from "../app/config/locales"
 import HomePage from '../app/pages/Home'
 import { PlayerCardsProvider } from '../app/Providers'
 import { io } from "./MockedSocketIO"
-import { EventNames } from '../base/utils/SocketIO/eventNames'
+import { EventNames } from '../base/Providers/SocketIo'
 
 
 const TEST_CONFIG = {

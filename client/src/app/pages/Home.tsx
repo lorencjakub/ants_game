@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import React from 'react'
 import {
     Button,
     Paper,
@@ -13,28 +13,24 @@ import ApiClient from '../../base/utils/Axios/ApiClient'
 import { IRoomInfoResponse } from '../../base/utils/Axios/types'
 import { AxiosError } from 'axios'
 import Loading from '../../base/components/Loading'
-import { ICard } from '../../base/utils/Axios/types'
-import { usePlayerCards } from '../Providers/PlayerCards'
 
 
-const HomePage: FC<{}> = () => {
+const HomePage: React.FC<{}> = () => {
     const navigate = useNavigate()
     const theme = useMuiTheme()
     const intl = useIntl()
-    const { setPlayerCards = (data: ICard[]) => {} } = usePlayerCards()
-    const [creatingRoom, setCreatingRoom] = useState<boolean>(false)
 
     const {
-        refetch: createRoom
+        refetch: createRoom,
+        isFetching: creatingRoom
     } = useQuery<IRoomInfoResponse, AxiosError>(
-        ["join_room_query"],
+        ["create_room_query"],
         async () => await ApiClient.createRoom(),
         {
             enabled: false,
             onSuccess: (res) => {
                 sessionStorage.setItem("Token", res.token)
-                setPlayerCards(res.cards, "createRoom")
-                navigate(`/room/${res.room}`)
+                navigate(`/room/${res.room}?creating=true`)
             }
         }
     )
@@ -110,8 +106,8 @@ const HomePage: FC<{}> = () => {
                 >
                     <Button
                         onClick={() => {
+                            sessionStorage.setItem("Token", "")
                             createRoom()
-                            setCreatingRoom(true)
                         }}
                         variant="contained"
                         sx={{

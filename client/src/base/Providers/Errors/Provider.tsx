@@ -15,9 +15,7 @@ const ErrorProvider: FC<{ children: any }> = ({ children }) => {
 
         try {
             message = errorList[messageId]
-        } catch {
-            false
-        }
+        } catch {}
 
         return message || <FormattedMessage id="errors.unspecified" defaultMessage="An unspecified error" />
     }

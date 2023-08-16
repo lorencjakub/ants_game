@@ -8,7 +8,7 @@ import {
 
 const apiClient = (): AxiosInstance => axios.create({
     baseURL: process.env.API_BASE_URL,
-    timeout: 60000,
+    timeout: parseInt(process.env.API_TIMEOUT || "0") || 60000,
     headers: {
         "Content-Type": "application/json",
         "CorsTrigger": "cors",
@@ -21,6 +21,7 @@ const apiClient = (): AxiosInstance => axios.create({
 
 
 const createRoom = async (): Promise<IRoomInfoResponse> => {
+    sessionStorage.setItem("Token", "")
     const response = await apiClient().get<IRoomInfoResponse>("/create_room")
     return response.data
 }

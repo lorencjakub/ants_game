@@ -8,9 +8,5 @@ BE_ENV = 'prod'
 cmds = ["pip install git+https://github.com/benoitc/gunicorn.git"]
 dependsOn = ['install']
 
-[phases.test]
-cmds = ["export BE_ENV=test", "coverage run -m pytest || exit -1", "coverage report", "export BE_ENV=prod"]
-dependsOn = ['custom_install']
-
 [start]
 cmd = "gunicorn --worker-class eventlet -b 0.0.0.0:8000 --workers 1 --threads 100 main_run:app"

@@ -35,7 +35,7 @@ describe(("Card component render and funcionalities"), () => {
     
         const card = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
         if (!card) throw Error(`Card ${TEST_CARD_WALL.item_name} not found`)
-        waitFor(() => fireEvent.click(card))
+        fireEvent.click(card)
         await waitFor(() => expect(ApiClient.play).toBeCalledWith(TEST_CARD_WALL.item_name))
     })
 
@@ -46,7 +46,7 @@ describe(("Card component render and funcionalities"), () => {
     
         const card = screen.getByTestId("ant_card.deck")
         if (!card) throw Error("Card in deck not found")
-        waitFor(() => fireEvent.click(card))
+        fireEvent.click(card)
         await waitFor(() => expect(ApiClient.play).not.toBeCalled())
     })
 
@@ -57,7 +57,7 @@ describe(("Card component render and funcionalities"), () => {
 
         const card = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
         if (!card) throw Error(`Card ${TEST_CARD_WALL.item_name} not found`)
-        waitFor(() => fireEvent.contextMenu(card))
+        fireEvent.contextMenu(card)
         await waitFor(() => expect(ApiClient.discard).toBeCalledWith(TEST_CARD_WALL.item_name))
     })
 
@@ -68,7 +68,7 @@ describe(("Card component render and funcionalities"), () => {
 
         const card = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
         if (!card) throw Error("Card in deck not found")
-        waitFor(() => fireEvent.contextMenu(card))
+        fireEvent.contextMenu(card)
         await waitFor(() => expect(ApiClient.discard).not.toBeCalled())
     })
 })

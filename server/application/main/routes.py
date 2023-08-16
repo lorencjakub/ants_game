@@ -1,9 +1,9 @@
-from flask import request, Response
+from flask import request, Response, jsonify
 import json
 from . import main
 from application.services import init_room, player_join_room_or_get_data,\
     discard_card, use_card_from_hand, deactivate_room, check_room, player_leave_room
-from application.services.error_handlers import CustomError
+from ..services.error_handlers import CustomError
 import traceback
 import logging
 
@@ -32,9 +32,9 @@ def create_room() -> Response:
 
 @main.route("/join_room/<guid>", methods=["GET"])
 def join_room(guid: str) -> Response:
-    """Join an existing Room as a guest player"""
+    """Create a new Player in Room from the invitation"""
     try:
-        return player_join_room_or_get_data(guid, request)
+        return jsonify(player_join_room_or_get_data(guid, request))
 
     except Exception as e:
         logging.error(traceback.format_exc())
@@ -56,7 +56,7 @@ def leave_room() -> Response:
 def discard() -> Response:
     """Discard any card from hand and draw a new card from deck"""
     try:
-        return discard_card(request)
+        return discard_card(request, True)
 
     except Exception as e:
         logging.error(traceback.format_exc())

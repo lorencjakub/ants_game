@@ -2,8 +2,8 @@ import React, { createContext } from "react"
 
 
 interface IThemeContext {
-    themeMode?: string,
-    toggleThemeMode?: () => void
+    themeMode: string,
+    toggleThemeMode: () => void
 }
 
 const ThemeContext = createContext<Partial<IThemeContext>>({})

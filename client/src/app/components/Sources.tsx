@@ -9,7 +9,7 @@ import { ISources, IPlayerSourceState } from "../../base/utils/Axios/types"
 import { useIntl, FormattedMessage } from "react-intl"
 
 
-const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, player }) => {
+const Sources: FC<{ sources: ISources | null, title: string }> = ({ sources, title }) => {
     const intl = useIntl()
     const [sourcesData, setSourcesData] = useState<IPlayerSourceState[]>([])
 
@@ -66,16 +66,15 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
                 variant="h5"
                 textAlign="end"
                 sx={{
-                    color: "#000",
                     mb: 2
                 }}
             >
-                {player}
+                {title}
             </Typography>
             {
                 sourcesData.map((data) => {
                     const { unit, amount, name } = data
-                    const key = `${name}_${unit}_${amount}.${player}`
+                    const key = `${name}_${unit}_${amount}.${title}`
 
                     return (
                         <Stack
@@ -90,11 +89,11 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
                             <Avatar
                                 data-testid={`source_row.${unit}.unit_icon`}
                                 key={`${key}_unit`}
-                                src={`/cards/${unit}.svg`}
+                                src={`/cards/${unit}_source.svg`}
                                 sx={{
                                     borderRadius: 0,
                                     width: 20,
-                                    height: 20
+                                    height: 20,
                                 }}
                             />
                             <Typography
@@ -104,7 +103,6 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
                                 textAlign="start"
                                 sx={{
                                     mx: 2,
-                                    color: "#000",
                                     minWidth: 80
                                 }}
                             >
@@ -115,9 +113,6 @@ const Sources: FC<{ sources: ISources | null, player: string }> = ({ sources, pl
                                 key={`${key}_price`}
                                 variant="body1"
                                 textAlign="end"
-                                sx={{
-                                    color: "#000"
-                                }}
                             >
                                 {amount}
                             </Typography>
