@@ -11,7 +11,7 @@ import { TEST_SOURCES } from "../MockedApiValues"
 test("Render of sources", () => {
     const messages = testMessagesGetter()
     
-    render(<Sources sources={TEST_SOURCES} title="Player1" />)
+    render(<Sources sources={TEST_SOURCES} title="Player1" changes={{}} cleanup={() => {}} />)
 
     Object.entries(TEST_SOURCES).forEach(([name, value]: [string, number]) => {
         const sourceRow = screen.getByTestId(`source_row.${name}`)

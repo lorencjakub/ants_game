@@ -1,11 +1,13 @@
-import { FC, useEffect, useState, useReducer, useCallback, memo, useMemo, Suspense } from 'react'
+import { FC, useEffect, useState, useReducer, useCallback, memo, useRef } from 'react'
 import {
     Button,
     Paper,
     Typography,
     Grid,
-    Backdrop
+    Backdrop,
+    Box
 } from "@mui/material"
+import CircularProgress from '@mui/material/CircularProgress'
 import { useMutation } from '@tanstack/react-query'
 import ApiClient from '../../base/utils/Axios/ApiClient'
 import {
@@ -29,6 +31,8 @@ import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
 
 
+const DEFAULT_TURN_TIMEOUT = parseInt(process.env.DEFAULT_TURN_TIMEOUT || "60")
+
 export interface IRoomStatus {
     active: boolean,
     winner?: string
@@ -41,6 +45,95 @@ const initRoomStatus: IRoomStatus = {
 
 const roomStatusReducer = (data: Partial<IRoomStatus>, action: Partial<IRoomStatus>) => {
     return { ...data, ...action }
+}
+
+interface IPlayerState {
+    sources: ISources | null,
+    changes: Partial<ISources>
+}
+
+const initState: IPlayerState = { sources: null, changes: {} }
+
+const getSourceChanges = (prevProps: ISources | null, nextProps: ISources | null) => {
+    var changes: Partial<ISources> = {}
+
+    if (!prevProps || !nextProps) return {}
+
+    Object.keys(prevProps as ISources).forEach((source) => {
+        const s = source as keyof ISources
+        const prevSources = prevProps as ISources
+        const nextSources = nextProps as ISources
+
+        if (prevSources[s] != nextSources[s]) {
+            changes[s] = nextSources[s] - prevSources[s]
+        }
+    })
+
+    return changes
+}
+
+const changeState = (state: IPlayerState, newState: { data?: ISources, cleanup?: boolean }): IPlayerState => {
+    const { data = state.sources, cleanup } = newState
+
+    if (!state || !data) return { ...initState }
+
+    const changes = getSourceChanges(state.sources, data)
+
+    return {
+        sources: data,
+        changes: (cleanup) ? {} : (Object.keys(changes).length == 0) ? state.changes : changes
+    }
+}
+
+const Stopwatches: FC<{}> = () => {
+    const { guid } = useParams()
+    const [value, setValue] = useState<number>(DEFAULT_TURN_TIMEOUT)
+
+    var timer: NodeJS.Timer
+
+    useEffect(() => {
+        if (gameSocket.connected && (value == 0)) {
+            gameSocket.emit(EventNames.TURN_TIMEOUT, guid)
+            clearInterval(timer)
+        }
+    }, [value])
+
+    useEffect(() => {
+        timer = setInterval(() => {
+            setValue(current => {
+                return (current <= 0) ? 0 : current - 1
+            })
+        }, 1000)
+
+        return (() => clearInterval(timer))
+    }, [])    
+
+    return (
+        <Box sx={{ position: 'relative', display: 'inline-flex', top: -4 }}>
+            <CircularProgress sx={{ color: "text.primary" }} />
+            <Box
+                sx={{
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                <Typography
+                    variant="caption"
+                    component="div"
+                    color="text.secondary"
+                    sx={{ pb: 1 }}
+                >
+                    {value}
+                </Typography>
+            </Box>
+        </Box>
+    )
 }
 
 const RoomInfo: FC<{ message: string | ReactJSXElement }> = ({ message }) => {
@@ -88,16 +181,21 @@ const Room: FC<{}> = () => {
 
     const [searchParams, setSearchParams] = useSearchParams()
     const [creatingRoom, setCreatingRoom] = useState<boolean>(true)
-    const [myState, setMyState] = useState<ISources | null>(null)
-    const [enemyState, setEnemyState] = useState<ISources | null>(null)
+    const [myState, setMyState] = useReducer<(state: IPlayerState, action: { data?: ISources, cleanup?: boolean }) => IPlayerState>(changeState, initState)
+    const [enemyState, setEnemyState] = useReducer<(state: IPlayerState, action: { data?: ISources, cleanup?: boolean }) => IPlayerState>(changeState, initState)
     const [onTurn, setOnTurn] = useState<string>("")
-    const [roomStatus, setRoomStatus] = useReducer<(data: Partial<IRoomStatus>, action: Partial<IRoomStatus>) => Partial<IRoomStatus>>(roomStatusReducer, initRoomStatus)    //TODO dopsat onError setnutí na true
+    const [roomStatus, setRoomStatus] = useReducer<(data: Partial<IRoomStatus>, action: Partial<IRoomStatus>) => Partial<IRoomStatus>>(roomStatusReducer, initRoomStatus)
     const {
         playerCards = [],
         setPlayerCards = (data: ICard[], eventName: string) => {},
         discarded = {},
         setDiscardedCard = (card: ICard) => {}
     } = usePlayerCards()
+    const [showStopwatches, setShowStopwatches] = useState<boolean>(false)
+
+    useEffect(() => {
+        setShowStopwatches(Boolean(onTurn == sessionStorage.getItem("Token") && enemyState.sources && myState.sources && !creatingRoom))
+    }, [onTurn, enemyState.sources, myState.sources, creatingRoom])
 
     const {
         mutate: playCard
@@ -127,6 +225,10 @@ const Room: FC<{}> = () => {
 
     const memoizedDiscardCard = useCallback(discardCard, [])
     const memoizedPlayCard = useCallback(playCard, [])
+    const memoizedCleanup = useCallback(() => {
+        setMyState({ cleanup: true })
+        setEnemyState({ cleanup: true })
+    }, [])
 
     useEffect(() => {
         if (!gameSocket.connected) gameSocket.connect()
@@ -152,8 +254,9 @@ const Room: FC<{}> = () => {
 
             const enemyToken = Object.keys(data).filter((k) => ![myToken, "discarded", "on_turn"].includes(k))[0]
             
-            if (data[String(myToken)]) setMyState(data[String(myToken)])
-            if (data[String(enemyToken)]) setEnemyState(data[String(enemyToken)])
+            if (data[String(myToken)]) setMyState({ data: data[String(myToken)] })
+
+            if (data[String(enemyToken)]) setEnemyState({ data: data[String(enemyToken)] })
             
             if (data.on_turn) setOnTurn(data.on_turn)
             if (data.discarded) setDiscardedCard(data.discarded)
@@ -255,7 +358,9 @@ const Room: FC<{}> = () => {
                             (myState) ?
                             <Sources
                                 title={intl.formatMessage({ id: "pages.room.player_panel.my_sources", defaultMessage: "My sources" })}
-                                sources={myState}
+                                sources={myState.sources}
+                                changes={myState.changes}
+                                cleanup={memoizedCleanup}
                             />
                             :
                             <Typography
@@ -312,26 +417,35 @@ const Room: FC<{}> = () => {
                             direction="column"
                             justifyContent="center"
                         >
-                            <Typography
-                                variant="h5"
-                                textAlign="center"
-                                sx={{
-                                    mb: 2
-                                }}
+                            <Grid
+                                container
+                                direction="row"
+                                justifyContent="space-between"
+                                sx={{ px: 2 }}
                             >
-                                <FormattedMessage
-                                    id="pages.room.battlefield.on_turn"
-                                    defaultMessage="On turn: {player}"
-                                    values={{
-                                        player: (
-                                            (onTurn === sessionStorage.getItem("Token")) ?
-                                            intl.formatMessage({ id: "pages.room.battlefield.on_turn.you", defaultMessage: "You" })
-                                            :
-                                            intl.formatMessage({ id: "pages.room.battlefield.on_turn.enemy", defaultMessage: "Enemy" })
-                                        )
+                                <Typography
+                                    variant="h5"
+                                    textAlign="center"
+                                    sx={{
+                                        mb: 2
                                     }}
-                                />
-                            </Typography>
+                                >
+                                    <FormattedMessage
+                                        id="pages.room.battlefield.on_turn"
+                                        defaultMessage="On turn: {player}"
+                                        values={{
+                                            player: (
+                                                (onTurn === sessionStorage.getItem("Token")) ?
+                                                intl.formatMessage({ id: "pages.room.battlefield.on_turn.you", defaultMessage: "You" })
+                                                :
+                                                intl.formatMessage({ id: "pages.room.battlefield.on_turn.enemy", defaultMessage: "Enemy" })
+                                            )
+                                        }}
+                                    />
+                                </Typography>
+                                {(showStopwatches) ? <Stopwatches /> : null
+                                }
+                            </Grid>
                             <Grid
                                 container
                                 direction="row"
@@ -347,7 +461,7 @@ const Room: FC<{}> = () => {
                         item
                         xs={2}
                         justifyContent="center"
-                        alignItems={(enemyState) ? "start" : undefined}
+                        alignItems={(enemyState.sources) ? "start" : undefined}
                         style={{
                             display: 'flex',
                             overflow: 'hidden'
@@ -362,10 +476,12 @@ const Room: FC<{}> = () => {
                         }}
                     >
                         {
-                            (enemyState) ?
+                            (enemyState.sources) ?
                             <Sources
                                 title={intl.formatMessage({ id: "pages.room.player_panel.enemy_sources", defaultMessage: "Enemy's sources" })}
-                                sources={enemyState}
+                                sources={enemyState.sources}
+                                changes={enemyState.changes}
+                                cleanup={memoizedCleanup}
                             />
                             :
                             <Grid

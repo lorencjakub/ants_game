@@ -2,7 +2,8 @@ from flask import request, current_app, session
 from flask_socketio import emit, join_room, leave_room, close_room, ConnectionRefusedError
 from .. import socketio
 from ..models import Players, Rooms
-from ..services.functions import get_current_state_in_room, check_room_and_player_for_ws_events, draw_cards, player_join_room_or_get_data, deactivate_room
+from ..services.functions import get_current_state_in_room, check_room_and_player_for_ws_events, draw_cards, \
+    player_join_room_or_get_data, deactivate_room, make_switch_turn
 from ..services.auth import get_saved_player
 import traceback
 import logging
@@ -143,6 +144,24 @@ def winner(winner_name: str, token: str | None = None):
     except Exception as e:
         logging.error(traceback.format_exc())
         emit("error", {"event": "client_winner", "message": e.description if isinstance(e, CustomError) else e.args[0]})
+
+
+@socketio.on('turn_timeout')
+def winner(guid: str):
+    """event listener when player did not make his turn in time"""
+    try:
+        room = Rooms.query.filter_by(guid=guid).first()
+        make_switch_turn(room)
+
+        state = {"on_turn": Players.query.get(room.player_on_turn).token}
+        state.update(get_current_state_in_room(guid))
+
+        join_room(room.guid)
+        emit("server_state_update", state, to=room.guid)
+
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        emit("error", {"event": "turn_timeout", "message": e.description if isinstance(e, CustomError) else e.args[0]})
 
 
 @socketio.on("chat_message", namespace="/chat")

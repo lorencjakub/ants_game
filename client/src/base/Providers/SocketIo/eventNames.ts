@@ -11,7 +11,8 @@ enum EventNames {
     SERVER_CHAT_MESSAGE = "server_chat_message",
     CONNECTED = "connected",
     DISCONNECTED = "disconnected",
-    ERROR = "error"
+    ERROR = "error",
+    TURN_TIMEOUT = "turn_timeout"
 }
 
 export { EventNames }

@@ -3,13 +3,46 @@ import {
     Typography,
     Grid,
     Stack,
-    Avatar
+    Avatar,
+    Zoom
 } from "@mui/material"
+import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
+import { styled } from '@mui/material/styles'
 import { ISources, IPlayerSourceState } from "../../base/utils/Axios/types"
-import { useIntl, FormattedMessage } from "react-intl"
+import { useIntl } from "react-intl"
 
 
-const Sources: FC<{ sources: ISources | null, title: string }> = ({ sources, title }) => {
+const DEFAULT_TOOLTIP_FADE_TIMEOUT = parseInt(process.env.DEFAULT_TOOLTIP_FADE_TIMEOUT || "5000")
+
+const StyledBonusTooltip = styled(({ className, ...props }: TooltipProps) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+    [`& .${tooltipClasses.tooltip}`]: {
+        backgroundColor: theme.palette.success.main,
+        color: theme.palette.common.white,
+        boxShadow: theme.shadows[1],
+        fontSize: 11
+    },
+    [`& .${tooltipClasses.arrow}`]: {
+        color: theme.palette.success.main
+    }
+}))
+
+const StyledLossTooltip = styled(({ className, ...props }: TooltipProps) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+    [`& .${tooltipClasses.tooltip}`]: {
+        backgroundColor: theme.palette.error.main,
+        color: theme.palette.common.white,
+        boxShadow: theme.shadows[1],
+        fontSize: 11
+    },
+    [`& .${tooltipClasses.arrow}`]: {
+        color: theme.palette.error.main
+    }
+}))
+
+const Sources: FC<{ sources: ISources | null, title: string, changes: Partial<ISources>, cleanup: () => void }> = ({ sources, title, changes, cleanup }) => {
     const intl = useIntl()
     const [sourcesData, setSourcesData] = useState<IPlayerSourceState[]>([])
 
@@ -43,6 +76,10 @@ const Sources: FC<{ sources: ISources | null, title: string }> = ({ sources, tit
 
     useEffect(() => {
         setSourcesData(createSourcesData(sources))
+
+        const timer = setTimeout(() => cleanup(), DEFAULT_TOOLTIP_FADE_TIMEOUT)
+
+        return (() => clearTimeout(timer))
     }, [sources])
 
     return (
@@ -75,6 +112,7 @@ const Sources: FC<{ sources: ISources | null, title: string }> = ({ sources, tit
                 sourcesData.map((data) => {
                     const { unit, amount, name } = data
                     const key = `${name}_${unit}_${amount}.${title}`
+                    const CustomTooltip = ((changes[unit as keyof ISources] || -1) > 0) ? StyledBonusTooltip : StyledLossTooltip
 
                     return (
                         <Stack
@@ -108,14 +146,38 @@ const Sources: FC<{ sources: ISources | null, title: string }> = ({ sources, tit
                             >
                                 {`${name}: `}
                             </Typography>
-                            <Typography
-                                data-testid={`source_row.${unit}.amount`}
-                                key={`${key}_price`}
-                                variant="body1"
-                                textAlign="end"
-                            >
-                                {amount}
-                            </Typography>
+                            {
+                                (changes[unit as keyof ISources]) ? 
+                                <CustomTooltip
+                                    title={`${((changes[unit as keyof ISources] || -1) > 0) ? "+" : ""}${changes[unit as keyof ISources] || 0}`}
+                                    placement="right"
+                                    arrow
+                                    disableFocusListener
+                                    disableHoverListener
+                                    disableTouchListener
+                                    disableInteractive
+                                    open={Boolean(changes[unit as keyof ISources])}
+                                    TransitionComponent={Zoom}
+                                >
+                                    <Typography
+                                        data-testid={`source_row.${unit}.amount`}
+                                        key={`${key}_price`}
+                                        variant="body1"
+                                        textAlign="end"
+                                    >
+                                        {(String(amount).length == 1) ? `0${amount}` : amount}
+                                    </Typography>
+                                </CustomTooltip>
+                                :
+                                <Typography
+                                    data-testid={`source_row.${unit}.amount`}
+                                    key={`${key}_price`}
+                                    variant="body1"
+                                    textAlign="end"
+                                >
+                                    {(String(amount).length == 1) ? `0${amount}` : amount}
+                                </Typography>
+                            }
                         </Stack>
                     )
                 })

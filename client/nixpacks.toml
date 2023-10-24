@@ -4,5 +4,8 @@ cmds = ["npm install"]
 [phases.build]
 cmds = ["npm run build"]
 
+[phases.env]
+cmd = "export NODE_ENV=production"
+
 [start]
 cmd = "npm run start"
