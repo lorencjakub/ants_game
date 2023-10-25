@@ -115,10 +115,10 @@ def handle_state_update(data, token: str | None = None):
     try:
         room, player = check_room_and_player_for_ws_events(token)
         action = data.get("action")
-        state = {"discarded": data.get("discarded"), "on_turn": Players.query.get(room.player_on_turn).token}
-
-        if action == "discard":
-            return emit("server_state_update", state, to=room.guid)
+        state = {
+            "discarded": data.get("discarded"),
+            "on_turn": Players.query.get(room.player_on_turn).token
+        }
 
         state.update(get_current_state_in_room(data.get("guid")))
 
