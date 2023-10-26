@@ -1,4 +1,3 @@
-from flask import Request
 from application.models import Players
 
 

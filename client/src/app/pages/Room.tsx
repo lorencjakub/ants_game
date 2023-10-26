@@ -29,6 +29,7 @@ import { EventNames, gameSocket, WSError } from '../../base/Providers/SocketIo'
 import { ReactJSXElement } from '@emotion/react/types/jsx-namespace'
 import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
+import { useErrors } from '../../base/Providers/Errors'
 
 
 const DEFAULT_TURN_TIMEOUT = parseInt(process.env.DEFAULT_TURN_TIMEOUT || "60")
@@ -181,6 +182,7 @@ const Room: FC<{}> = () => {
     const theme = useTheme()
     const { enqueueSnackbar } = useSnackbar()
     const navigate = useNavigate()
+    const { parseErrorMessage } = useErrors()
 
     const [searchParams, setSearchParams] = useSearchParams()
     const [creatingRoom, setCreatingRoom] = useState<boolean>(true)
@@ -237,12 +239,21 @@ const Room: FC<{}> = () => {
         if (!gameSocket.connected) gameSocket.connect()
 
         gameSocket.on(EventNames.ERROR, (error: WSError) => {
-            if ((error.event == EventNames.JOIN_ROOM) && (error.message == "Room is not active anymore")) return setRoomStatus({ active: false })
+            const { event, messages } = error
+
+            if ((event == EventNames.JOIN_GAME) && (messages[0] == "Room is not active anymore")) return setRoomStatus({ active: false })
             
-            enqueueSnackbar(error.message, { variant:"error" })
+            messages.forEach((e: string) => {
+                enqueueSnackbar(
+                    parseErrorMessage && parseErrorMessage(e),
+                    {
+                        variant: "error"
+                    }
+                )
+            })
         })
 
-        gameSocket.on(EventNames.JOIN_ROOM, (data: TSocketJoinRoomResponse | any) => {
+        gameSocket.on(EventNames.JOIN_GAME, (data: TSocketJoinRoomResponse | any) => {
             if (data.cards) setPlayerCards(data.cards, "createRoom")
 
             if (data.message && ((data.message as string) == "Room is not active anymore")) setRoomStatus({ active: false })
@@ -273,7 +284,7 @@ const Room: FC<{}> = () => {
             console.log(data)
         })
 
-        gameSocket.emit(EventNames.JOIN_ROOM, guid, sessionStorage.getItem("Token") || "")
+        gameSocket.emit(EventNames.JOIN_GAME, guid, sessionStorage.getItem("Token") || "")
 
         gameSocket.on(EventNames.LEAVE_SERVER, (playerToken: string) => {
             setRoomStatus({ active: false, message: intl.formatMessage({ id: "pages.room.enemy_left", defaultMessage: "Enemy left the battlefield!" }) })
@@ -435,7 +446,7 @@ const Room: FC<{}> = () => {
                                 <Button
                                     variant="contained"
                                     onClick={() => {
-                                        if (gameSocket.connected) gameSocket.emit(EventNames.LEAVE_ROOM, sessionStorage.getItem("Token") || "")
+                                        if (gameSocket.connected) gameSocket.emit(EventNames.LEAVE_GAME, sessionStorage.getItem("Token") || "")
                                     }}
                                     sx={{
                                         backgroundColor: "text.primary",

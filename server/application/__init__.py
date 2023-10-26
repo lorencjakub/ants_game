@@ -43,7 +43,7 @@ def create_app(with_secutiry: bool = True, with_sockets: bool = False) -> Flask 
 
     register_extensions(app)
     register_blueprints(app)
-    # register_app_error_handlers(app)
+    register_app_error_handlers(app)
     # register_shellcontext(app)
     # register_commands(app)
     # configure_logger(app)

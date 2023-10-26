@@ -24,7 +24,7 @@ def check_room(request: Request) -> Union[None, Tuple[Rooms, Players]]:
     room = player.get_player_room()
 
     if not room.active:
-        raise CustomError("Room is not active anymore")
+        raise CustomError("RM_NAC")
 
     return room, player
 
@@ -46,7 +46,7 @@ def player_join_room_or_get_data(guid: str, request: Request | None, token: str 
     room = Rooms.query.filter_by(guid=guid).first()
 
     if not room:
-        raise CustomError("Invalid room")
+        raise CustomError("RM_INV")
 
     if len(room.cards_in_deck) == 0:
         room.create_deck()
@@ -109,7 +109,7 @@ def player_leave_room(request: Request) -> Response:
     player_room = player.get_player_room()
 
     if not player_room:
-        raise CustomError("Invalid room")
+        raise CustomError("RM_INV")
 
     player_room.update(players=[p for p in player_room.players if p.id != player.id])
 
@@ -121,7 +121,7 @@ def make_switch_turn(room: Rooms) -> None:
     new_player_id = room.switch_turn().player_on_turn
 
     if current_player_id == new_player_id:
-        raise CustomError("Error during switching turn")
+        raise CustomError("TRN_SWC")
 
     new_player = Players.get_by_id(new_player_id)
     new_player.sources.grow_sources()
@@ -151,14 +151,15 @@ def draw_cards(player: Players, count: int = 1) -> List[BuildingCards | Soldiers
 
 def discard_card(request: Request, discarded: bool = False):
     card_name = request.json.get("card_name")
+
     if not card_name:
-        raise CustomError("Missing card")
+        raise CustomError("CRD_MSN")
 
     player = get_saved_player(request.headers.get("Token"))
     card = next((c for c in player.cards if c.item_name == card_name), None)
 
     if not card:
-        raise CustomError("Player does not have this card in hand")
+        raise CustomError("CRD_PLR")
 
     remove_card_from_deck({"player": player.id}, [card], lambda x: f'player_{x}')
     draw_cards(player)
@@ -190,12 +191,12 @@ def use_card_from_hand(request: Request) -> Response:
     card_name = request.json.get("card_name")
 
     if not card_name:
-        raise CustomError("Missing card")
+        raise CustomError("CRD_MSN")
 
     card = next((c for c in current_player.cards if c.item_name == card_name), None)
 
     if not card:
-        raise CustomError("Player does not have this card in hand")
+        raise CustomError("CRD_PLR")
 
     new_state = play_card(card, current_player)
     winner = None
@@ -235,27 +236,27 @@ def play_card(card: BuildingCards | SoldiersCards | MagicCards, player: Players)
         Dict[str, Dict[str, str | int | Dict[str, int]] | List[Dict[str, str | int]]]:
     card = next((c for c in player.cards if c.item_name == card.item_name), None)
     if not card:
-        raise CustomError("Player does not have this card in hand")
+        raise CustomError("CRD_PLR")
 
     if card.price_amount > player.sources.__getattribute__(card.price_unit):
-        raise CustomError("This card is too expensive for the player")
+        raise CustomError("CRD_XPS")
 
     room = player.get_player_room()
 
     if player.id != room.player_on_turn:
-        raise CustomError("Player is not on turn now")
+        raise CustomError("TRN_PLR")
 
     enemy = room.get_enemy(player)
     
     if not enemy:
-        raise CustomError("You cannot play until second player join the room")
+        raise CustomError("PLR_WTN")
     
     card_data = create_data_dict(card)
 
     if card.item_name == "thief":
         enemy_sources = create_data_dict(enemy.sources)
         if not enemy_sources:
-            raise CustomError("Sources of enemy has not been found")
+            raise CustomError("SRC_NTF")
 
         card_data["enemy_lost_amount"] = {}
         card_data["bonus_amount"] = {}
@@ -290,7 +291,7 @@ def remove_card_from_deck(
     association = model.query.filter_by(card=card.id, **owner).first()
 
     if not association or association.count == 0:
-        raise CustomError("Card not found in deck")
+        raise CustomError("CRD_NTF")
 
     association.count -= 1
     db.session.add(association)
@@ -338,7 +339,7 @@ def process_card_effects(new_sources, card_data, effect) -> Dict[str, int]:
 
 def apply_cards_effect(player, card_data, apply_enemy_effects: bool = False) -> Dict[str, int]:
     if not player.sources:
-        raise CustomError("Player does not have any sources")
+        raise CustomError("PLR_SRC")
 
     new_sources = create_data_dict(player.sources)
 
@@ -360,10 +361,10 @@ def deactivate_room(guid: str, request: Request, winner: str = None, player_inst
     player = player_instance or get_saved_player(request.headers.get("Token"))
 
     if not room:
-        raise CustomError("Invalid room")
+        raise CustomError("RM_INV")
 
     if not winner and not player.is_host:
-        raise CustomError("Only host player is able to deactivate room")
+        raise CustomError("PLR_DCT")
 
     room.update(**{"active": False, "winner": winner} if winner else {"active": False})
 
@@ -394,7 +395,7 @@ def check_room_and_player_for_ws_events(token: str) -> Tuple[Rooms, Players]:
         room = player.get_player_room()
 
         if not room.active:
-            raise CustomError("Room is not active anymore")
+            raise CustomError("RM_NAC")
 
         return room, player
 

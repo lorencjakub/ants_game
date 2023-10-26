@@ -1,8 +1,8 @@
 enum EventNames {
     CONNECT = "connect",
     DISCONNECT = "disconnect",
-    JOIN_ROOM = "join_room",
-    LEAVE_ROOM = "leave_room",
+    JOIN_GAME = "join_game",
+    LEAVE_GAME = "leave_game",
     LEAVE_SERVER = "leave_server",
     SERVER_STATE_UPDATE = "server_state_update",
     CLIENT_STATE_UPDATE = "client_state_update",

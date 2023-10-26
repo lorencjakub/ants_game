@@ -211,7 +211,7 @@ class Players(PkModel):
     def get_player_room(self):
         player_room = Rooms.query.filter(Rooms.players.contains(self)).first()
         if not player_room:
-            raise CustomError("Player not found in any room")
+            raise CustomError("PLR_NTF")
 
         return player_room
 
@@ -272,24 +272,24 @@ class Rooms(PkModel):
 
     def switch_turn(self):
         if not self.is_full:
-            raise CustomError("Room is not full")
+            raise CustomError("PLR_WTN")
 
         new_player_on_turn = next((p for p in self.players if p.id != self.player_on_turn), None)
         return self.update(True, player_on_turn=new_player_on_turn.id)
 
     def add_player(self, p: Players):
         if self.is_full:
-            raise CustomError("This room is already full")
+            raise CustomError("RM_FLL")
 
         if p in self.players:
-            raise CustomError("Player is already in this room")
+            raise CustomError("PLR_RM")
 
         self.players.append(p)
         return self.update(True, players=self.players, is_full=bool(len(self.players) == 2))
 
     def remove_player(self, p: Players):
         if p not in self.players:
-            raise CustomError("Player not found in this room")
+            raise CustomError("PLR_NTF")
 
         self.players.remove(p)
         return self.update(True, players=self.players)
@@ -390,7 +390,7 @@ def get_table_by_tablename(tablename: str):
             return Sources
 
         case _:
-            raise CustomError(f'Unknown tablename {tablename}')
+            raise CustomError([f'Unknown tablename {tablename}'])
 
 
 def create_data_dict(obj, delete_id: bool = True):

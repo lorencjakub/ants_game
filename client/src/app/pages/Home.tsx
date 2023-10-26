@@ -22,6 +22,7 @@ const HomePage: React.FC<{}> = () => {
     const intl = useIntl()
 
     const changelogMessages = [
+        intl.formatMessage({ id: "changelog_message_6", defaultMessage: "Error handlers" }),
         intl.formatMessage({ id: "changelog_message_5", defaultMessage: "Added button for leave battlefield + room lock after player left game" }),
         intl.formatMessage({ id: "changelog_message_4", defaultMessage: "Too expensive cards are disabled in player's deck" }),
         intl.formatMessage({ id: "changelog_message_3", defaultMessage: "Fix for switching turn on discard event" }),

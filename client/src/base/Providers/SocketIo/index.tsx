@@ -32,7 +32,7 @@ const chatSocket: Socket = wsManager.socket(
 
 interface WSError {
     event: EventNames,
-    message: string
+    messages: string[]
 }
 
 export { EventNames } from "./eventNames"

@@ -13,30 +13,26 @@ const Provider: FC<{ children: ReactNode }> = ({ children }) => {
             queries: {
                 staleTime: Infinity,
                 onError: (err: any) => {
-                    var errorData = ""
-
-                    if (!err?.response && err?.message) {
-                        errorData = err?.message
-                    } else if (err?.response?.data && err?.response?.data.message) {
-                        errorData = err?.response?.data.message
-                    }
-
-                    enqueueSnackbar(
-                        parseErrorMessage && parseErrorMessage(errorData),
-                        {
-                            variant: "error"
-                        }
-                    )
+                    err?.response?.data?.message.forEach((e: string) => {
+                        enqueueSnackbar(
+                            parseErrorMessage && parseErrorMessage(e),
+                            {
+                                variant: "error"
+                            }
+                        )
+                    })
                 }
             },
             mutations: {
                 onError: (err: any) => {
-                    enqueueSnackbar(
-                        parseErrorMessage && parseErrorMessage(err?.response?.data),
-                        {
-                            variant: "error"
-                        }
-                    )
+                    err?.response?.data?.message.forEach((e: string) => {
+                        enqueueSnackbar(
+                            parseErrorMessage && parseErrorMessage(e),
+                            {
+                                variant: "error"
+                            }
+                        )
+                    })
                 }
             }
         }
