@@ -109,7 +109,7 @@ describe(("Room init render"), () => {
         await renderFullRoom([])
 
         sessionStorage.clear()
-        act(() => serverSocket.emit(EventNames.JOIN_ROOM, DEFAULT_PLAYERS_STATES))
+        act(() => serverSocket.emit(EventNames.JOIN_GAME, DEFAULT_PLAYERS_STATES))
 
         await waitFor(() => checkStates())
     })
@@ -125,7 +125,7 @@ describe(("Room init render"), () => {
 
         await renderFullRoom(cards)
 
-        act(() => serverSocket.emit(EventNames.JOIN_ROOM, DEFAULT_PLAYERS_STATES))
+        act(() => serverSocket.emit(EventNames.JOIN_GAME, DEFAULT_PLAYERS_STATES))
         await waitFor(() => checkStates(2))
     })
 })
@@ -164,7 +164,7 @@ describe(("Game functionalities"), () => {
 
         await renderFullRoom(cards)
 
-        act(() => serverSocket.emit(EventNames.JOIN_ROOM, DEFAULT_PLAYERS_STATES))
+        act(() => serverSocket.emit(EventNames.JOIN_GAME, DEFAULT_PLAYERS_STATES))
         await waitFor(() => checkStates(2))
 
         const wallCard = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
@@ -231,7 +231,7 @@ describe(("Game functionalities"), () => {
 
         await renderFullRoom(cards)
 
-        act(() => serverSocket.emit(EventNames.JOIN_ROOM, DEFAULT_PLAYERS_STATES))
+        act(() => serverSocket.emit(EventNames.JOIN_GAME, DEFAULT_PLAYERS_STATES))
         await waitFor(() => checkStates(2))
 
         const wallCard = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
