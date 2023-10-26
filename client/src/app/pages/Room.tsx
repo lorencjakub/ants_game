@@ -17,7 +17,7 @@ import {
 import { AxiosError } from 'axios'
 import { useIntl, FormattedMessage } from "react-intl"
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
-import { MemoizedCard } from "../components/Card"
+import { AntCard } from "../components/Card"
 import { ICard } from '../../base/utils/Axios/types'
 import { usePlayerCards } from '../Providers/PlayerCards'
 import Sources from '../components/Sources'
@@ -363,8 +363,8 @@ const Room: FC<{}> = () => {
                                 direction="row"
                                 justifyContent="center"
                             >
-                                <MemoizedCard sx={{ mt: 0 }} />
-                                {(Object.keys(discarded).length === 0) ? null : <MemoizedCard { ...discarded } sx={{ mt: 0 }} />}
+                                <AntCard sx={{ mt: 0 }} />
+                                {(Object.keys(discarded).length === 0) ? null : <AntCard { ...discarded } sx={{ mt: 0 }} />}
                             </Grid>
                         </Grid>
                     </Grid>
@@ -480,7 +480,7 @@ const Room: FC<{}> = () => {
                         const key = `${data.unit}_${data.price}_${data.item_name}_${randomSuffix}`
 
                         return (
-                            <MemoizedCard
+                            <AntCard
                                 { ...data }
                                 discardFn={memoizedDiscardCard}
                                 playFn={memoizedPlayCard}

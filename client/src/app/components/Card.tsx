@@ -1,4 +1,4 @@
-import React, { FC, memo } from "react"
+import React, { FC } from "react"
 import {
     Typography,
     Card,
@@ -183,9 +183,4 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
     )
 }
 
-const MemoizedCard = memo((props: Partial<IInteractiveCard>) => AntCard(props))
-
-export {
-    AntCard,
-    MemoizedCard
-}
+export { AntCard }

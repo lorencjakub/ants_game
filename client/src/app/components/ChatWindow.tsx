@@ -5,7 +5,7 @@ import {
     Typography
 } from '@mui/material'
 import { EventNames, chatSocket } from "../../base/Providers/SocketIo"
-import { MemoizedNewMessage } from "./NewMessageRow"
+import { NewMessage } from "./NewMessageRow"
 import { TIncomingMessage } from "./types"
 import { messagesCacheReducer, initMessages } from "./functions"
 
@@ -49,7 +49,7 @@ const ChatWindow: FC<{}> = () => {
                     </Typography>
                 ))}
             </Paper>
-            <MemoizedNewMessage />
+            <NewMessage />
         </Grid>
     )
 }

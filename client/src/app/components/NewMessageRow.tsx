@@ -1,4 +1,4 @@
-import { FC, useRef, memo } from "react"
+import { FC, useRef } from "react"
 import { useIntl } from "react-intl"
 import { useTheme as useMuiTheme } from "@mui/material/styles"
 import { chatSocket, EventNames } from "../../base/Providers/SocketIo"
@@ -55,9 +55,4 @@ const NewMessage: FC<{}> = () => {
     )
 }
 
-const MemoizedNewMessage = memo(NewMessage)
-
-export {
-    NewMessage,
-    MemoizedNewMessage
-}
+export { NewMessage }
