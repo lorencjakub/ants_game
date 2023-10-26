@@ -6,9 +6,10 @@ import {
     Grid,
     Backdrop
 } from "@mui/material"
+import { ReactJSXElement } from "@emotion/react/types/jsx-namespace"
 
 
-const Loading: FC<{ message?: string, spinner?: JSX.Element, sx?: any }> = ({ message = "", spinner, sx }) => {
+const Loading: FC<{ message?: string | ReactJSXElement, spinner?: ReactJSXElement, sx?: any }> = ({ message = "", spinner, sx }) => {
     return (
         <Backdrop
             open={true}

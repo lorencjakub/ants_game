@@ -35,12 +35,14 @@ const DEFAULT_TURN_TIMEOUT = parseInt(process.env.DEFAULT_TURN_TIMEOUT || "60")
 
 export interface IRoomStatus {
     active: boolean,
-    winner?: string
+    winner?: string,
+    message?: string | ReactJSXElement
 }
 
 const initRoomStatus: IRoomStatus = {
     active: true,
-    winner: undefined
+    winner: undefined,
+    message: <FormattedMessage id="processing_backdrop_message.locked_room" defaultMessage="This room is locked and inactive" />
 }
 
 const roomStatusReducer = (data: Partial<IRoomStatus>, action: Partial<IRoomStatus>) => {
@@ -136,7 +138,7 @@ const Stopwatches: FC<{}> = () => {
     )
 }
 
-const RoomInfo: FC<{ message: string | ReactJSXElement }> = ({ message }) => {
+const RoomInfo: FC<{ message?: string | ReactJSXElement }> = ({ message }) => {
     const intl = useIntl()
     const navigate = useNavigate()
 
@@ -178,6 +180,7 @@ const Room: FC<{}> = () => {
     const intl = useIntl()
     const theme = useTheme()
     const { enqueueSnackbar } = useSnackbar()
+    const navigate = useNavigate()
 
     const [searchParams, setSearchParams] = useSearchParams()
     const [creatingRoom, setCreatingRoom] = useState<boolean>(true)
@@ -272,6 +275,15 @@ const Room: FC<{}> = () => {
 
         gameSocket.emit(EventNames.JOIN_ROOM, guid, sessionStorage.getItem("Token") || "")
 
+        gameSocket.on(EventNames.LEAVE_SERVER, (playerToken: string) => {
+            setRoomStatus({ active: false, message: "Enemy left the game" })
+
+            if (playerToken == sessionStorage.getItem("Token")) {
+                sessionStorage.setItem("Token", "")
+                navigate("/")
+            }
+        })
+
         return () => {
             gameSocket.disconnect()
         }
@@ -293,7 +305,7 @@ const Room: FC<{}> = () => {
                     Boolean(roomStatus.winner) ?
                     <FormattedMessage id="processing_backdrop_message.winner" defaultMessage="{winner} is a winner!" values={{ winner: roomStatus.winner }} />
                     :
-                    intl.formatMessage({ id: "processing_backdrop_message.locked_room", defaultMessage: "This room is locked and inactive" })
+                    roomStatus.message
                 }
             />
         </Backdrop>
@@ -401,14 +413,38 @@ const Room: FC<{}> = () => {
                                 ml: 4
                             }}
                         >
-                            <Typography
-                                variant="h5"
-                                sx={{
-                                    mb: 2
+                            <Grid
+                                container
+                                direction="row"
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between"
                                 }}
                             >
-                                {intl.formatMessage({ id: "chat_window.title", defaultMessage: "Battle Chat" })}
-                            </Typography>
+                                <Typography
+                                    variant="h5"
+                                    sx={{
+                                        mb: 2
+                                    }}
+                                >
+                                    {intl.formatMessage({ id: "chat_window.title", defaultMessage: "Battle Chat" })}
+                                </Typography>
+                                <Button
+                                    variant="contained"
+                                    onClick={() => {
+                                        if (gameSocket.connected) gameSocket.emit(EventNames.LEAVE_ROOM, sessionStorage.getItem("Token") || "")
+                                    }}
+                                    sx={{
+                                        backgroundColor: "text.primary",
+                                        maxWidth: 250,
+                                        height: 30,
+                                        px: 2,
+                                        mt: 0.3
+                                    }}
+                                >
+                                    {intl.formatMessage({ id: "processing_backdrop_message.lock_button", defaultMessage: "Leave battlefield" })}
+                                </Button>
+                            </Grid>
                             <ChatWindow />
                         </Grid>
                         <Grid
@@ -587,16 +623,6 @@ const Room: FC<{}> = () => {
                         :
                         intl.formatMessage({ id: "processing_backdrop_message.", defaultMessage: "Connecting to room..." })
                     }
-                    sx={{
-                        backgroundColor: "background.default",
-                        opacity: 0,
-                        zIndex: 5
-                    }}
-                />
-            }
-            {(roomStatus.active) ? null :
-                <Loading
-                    spinner={<FormattedMessage id="processing_backdrop_message.locked_room" defaultMessage="This room is locked and inactive" />}
                     sx={{
                         backgroundColor: "background.default",
                         opacity: 0,

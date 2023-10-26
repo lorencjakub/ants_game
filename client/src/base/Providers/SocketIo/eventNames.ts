@@ -3,6 +3,7 @@ enum EventNames {
     DISCONNECT = "disconnect",
     JOIN_ROOM = "join_room",
     LEAVE_ROOM = "leave_room",
+    LEAVE_SERVER = "leave_server",
     SERVER_STATE_UPDATE = "server_state_update",
     CLIENT_STATE_UPDATE = "client_state_update",
     SERVER_WINNER = "server_winner",

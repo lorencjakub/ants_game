@@ -93,22 +93,6 @@ def on_join(guid, token: str | None = None):
         emit("error", {"event": "join_room", "message": e.description if isinstance(e, CustomError) else e.args[0]})
 
 
-@socketio.on('leave_room')
-def on_leave():
-    try:
-        room, player = check_room_and_player_for_ws_events(request.args.get("Token"))
-        leave_room(room.guid)
-
-        data = {"player": player.name}
-        data.update(get_current_state_in_room(request.values.get("guid")))
-
-        emit("leave_room", data, to=room.guid)
-
-    except Exception as e:
-        logging.error(traceback.format_exc())
-        emit("error", {"event": "leave_room", "message": e.description if isinstance(e, CustomError) else e.args[0]})
-
-
 @socketio.on("server_state_update")
 def handle_state_update(data, token: str | None = None):
     """Event listener when player finish his turn, game is going to update state."""
@@ -128,6 +112,21 @@ def handle_state_update(data, token: str | None = None):
     except Exception as e:
         logging.error(traceback.format_exc())
         emit("error", {"event": "server_state_update", "message": e.description if isinstance(e, CustomError) else e.args[0]})
+
+
+@socketio.on("leave_room")
+def leave_room(token: str):
+    """Event listener when player finish his turn, game is going to update state."""
+    try:
+        room, player = check_room_and_player_for_ws_events(token)
+        room.update(active=False)
+
+        join_room(room.guid)
+        emit("leave_server", player.token, to=room.guid)
+
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        emit("error", {"event": "leave_room", "message": e.description if isinstance(e, CustomError) else e.args[0]})
 
 
 @socketio.on('server_winner')
