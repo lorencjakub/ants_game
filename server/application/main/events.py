@@ -130,15 +130,15 @@ def leave_room(token: str):
 
 
 @socketio.on('server_winner')
-def winner(winner_name: str, token: str | None = None):
+def winner(winner_token: str, token: str | None = None):
     """event listener when client connects to the server"""
     try:
         room, player = check_room_and_player_for_ws_events(token)
-        winner_player = Players.query.filter_by(token=winner_name).first()
+        winner_player = Players.query.filter_by(token=winner_token).first()
 
-        emit("client_winner", winner_player.name, to=room.guid)
+        emit("client_winner", winner_player.token, to=room.guid)
 
-        deactivate_room(room.guid, request, winner_player.name, [p for p in room.players if p.is_host][0])
+        deactivate_room(room.guid, request, winner_player.token, [p for p in room.players if p.is_host][0])
 
     except Exception as e:
         logging.error(traceback.format_exc())

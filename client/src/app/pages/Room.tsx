@@ -265,8 +265,8 @@ const Room: FC<{}> = () => {
             if (data.discarded) setDiscardedCard(data.discarded)
         })
 
-        gameSocket.on(EventNames.CLIENT_WINNER, (winner_name: any) => {
-            setRoomStatus({ winner: winner_name })
+        gameSocket.on(EventNames.CLIENT_WINNER, (winner_token: any) => {
+            setRoomStatus({ winner: winner_token })
         })
 
         gameSocket.on(EventNames.DISCONNECT, (data) => {
@@ -276,7 +276,7 @@ const Room: FC<{}> = () => {
         gameSocket.emit(EventNames.JOIN_ROOM, guid, sessionStorage.getItem("Token") || "")
 
         gameSocket.on(EventNames.LEAVE_SERVER, (playerToken: string) => {
-            setRoomStatus({ active: false, message: "Enemy left the game" })
+            setRoomStatus({ active: false, message: intl.formatMessage({ id: "pages.room.enemy_left", defaultMessage: "Enemy left the battlefield!" }) })
 
             if (playerToken == sessionStorage.getItem("Token")) {
                 sessionStorage.setItem("Token", "")
@@ -303,7 +303,10 @@ const Room: FC<{}> = () => {
             <RoomInfo
                 message={
                     Boolean(roomStatus.winner) ?
-                    <FormattedMessage id="processing_backdrop_message.winner" defaultMessage="{winner} is a winner!" values={{ winner: roomStatus.winner }} />
+                        (roomStatus.winner == sessionStorage.getItem("Token")) ? 
+                            intl.formatMessage({ id: "processing_backdrop_message.winner", defaultMessage: "You win!" })
+                            :
+                            intl.formatMessage({ id: "processing_backdrop_message.looser", defaultMessage: "You loose!" })
                     :
                     roomStatus.message
                 }

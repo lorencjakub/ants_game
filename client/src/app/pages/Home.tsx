@@ -3,7 +3,8 @@ import {
     Button,
     Paper,
     Grid,
-    Typography
+    Typography,
+    List
 } from "@mui/material"
 import { useNavigate } from 'react-router-dom'
 import { useTheme as useMuiTheme } from "@mui/material/styles"
@@ -19,6 +20,14 @@ const HomePage: React.FC<{}> = () => {
     const navigate = useNavigate()
     const theme = useMuiTheme()
     const intl = useIntl()
+
+    const changelogMessages = [
+        intl.formatMessage({ id: "changelog_message_5", defaultMessage: "Added button for leave battlefield + room lock after player left game" }),
+        intl.formatMessage({ id: "changelog_message_4", defaultMessage: "Too expensive cards are disabled in player's deck" }),
+        intl.formatMessage({ id: "changelog_message_3", defaultMessage: "Fix for switching turn on discard event" }),
+        intl.formatMessage({ id: "changelog_message_2", defaultMessage: "Tooltip witch resources changes for both players" }),
+        intl.formatMessage({ id: "changelog_message_1", defaultMessage: "60s timeout on player's turn (visible countdown)" }),
+    ]
 
     const {
         refetch: createRoom,
@@ -57,7 +66,7 @@ const HomePage: React.FC<{}> = () => {
             <Grid
                 data-testid="pages.homepage.container"
                 container
-                direction="column"
+                direction="row"
                 spacing={1}
                 justifyContent="center"
                 alignItems="center"
@@ -68,55 +77,94 @@ const HomePage: React.FC<{}> = () => {
             >
                 <Grid
                     data-testid="pages.homepage.title"
-                    item
-                    style={{
-                        display: "flex",
-                        justifyContent: "center"
-                    }}
+                    container
+                    direction="column"
+                    alignItems="center"
                 >
-                    <Typography
-                        variant="h6"
-                        color="text.primary"
-                    >
-                        {intl.formatMessage({ id: "pages.homepage.title", defaultMessage: "Welcome!" })}
-                    </Typography>
-                </Grid>
-                <Grid
-                    data-testid="pages.homepage.about"
-                    item
-                    style={{
-                        display: "flex",
-                        justifyContent: "flex-start"
-                    }}
-                >
-                    <Typography
-                        variant="body1"
-                        color="text.secondary"
-                    >
-                        {intl.formatMessage({ id: "pages.homepage.about", defaultMessage: "This is the online version of a czech freeware game Ants" })}
-                    </Typography>
-                </Grid>
-                <Grid
-                    data-testid="pages.homepage.new_room_button"
-                    item
-                    style={{
-                        display: "flex",
-                        justifyContent: "center"
-                    }}
-                >
-                    <Button
-                        onClick={() => {
-                            sessionStorage.setItem("Token", "")
-                            createRoom()
-                        }}
-                        variant="contained"
-                        sx={{
-                            backgroundColor: theme.palette.text.primary,
-                            m: 3
+                    <Grid
+                        data-testid="pages.homepage.title"
+                        item
+                        style={{
+                            display: "flex",
+                            justifyContent: "center"
                         }}
                     >
-                        {intl.formatMessage({ id: "pages.homepage.new_room_button", defaultMessage: "Create a new Room" })}
-                    </Button>
+                        <Typography
+                            variant="h6"
+                            color="text.primary"
+                        >
+                            {intl.formatMessage({ id: "pages.homepage.title", defaultMessage: "Welcome!" })}
+                        </Typography>
+                    </Grid>
+                    <Grid
+                        data-testid="pages.homepage.about"
+                        item
+                        style={{
+                            display: "flex",
+                            justifyContent: "flex-start"
+                        }}
+                    >
+                        <Typography
+                            variant="body1"
+                            color="text.secondary"
+                        >
+                            {intl.formatMessage({ id: "pages.homepage.about", defaultMessage: "This is the online version of a czech freeware game Ants" })}
+                        </Typography>
+                    </Grid>
+                    <Grid
+                        data-testid="pages.homepage.new_room_button"
+                        item
+                        style={{
+                            display: "flex",
+                            justifyContent: "center"
+                        }}
+                    >
+                        <Button
+                            onClick={() => {
+                                sessionStorage.setItem("Token", "")
+                                createRoom()
+                            }}
+                            variant="contained"
+                            sx={{
+                                backgroundColor: theme.palette.text.primary,
+                                m: 3
+                            }}
+                        >
+                            {intl.formatMessage({ id: "pages.homepage.new_room_button", defaultMessage: "Create a new Room" })}
+                        </Button>
+                    </Grid>
+                </Grid>
+                <Grid
+                    data-testid="pages.homepage.changelog"
+                    container
+                    direction="row"
+                    justifyContent="center"
+                    sx={{ mt: 4 }}
+                >
+                    <List sx={{ mt: 1 }}>
+                        <Typography
+                            variant="h5"
+                            color="text.primary"
+                            sx={{
+                                mb: 4
+                            }}
+                            style={{
+                                display: "flex",
+                                justifyContent: "center"
+                            }}
+                        >
+                            {intl.formatMessage({ id: "pages.homepage.changelog_title", defaultMessage: "Changelog" })}
+                        </Typography>
+                        {Object.entries(changelogMessages).map(([i, m]) => (
+                            <Typography
+                                variant="body1"
+                                color="text.secondary"
+                                key={`changelog_message_${i}`}
+                            >
+                               •    {m}
+                            </Typography>
+                        ))}
+                    </List>
                 </Grid>
             </Grid>
             {(!creatingRoom) ? null :
