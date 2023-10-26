@@ -45,7 +45,7 @@ const PageFooter: FC<{}> = () => {
                 <Link
                     variant="body1"
                     color="text.primary"
-                    href="https://github.com/lorencjakub/nutri_manager"
+                    href={process.env.SOURCE_URL}
                     sx={{
                         mx: 2
                     }}
