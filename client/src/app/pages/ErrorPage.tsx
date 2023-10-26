@@ -1,7 +1,6 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
 import {
     Paper,
-    Grid,
     Typography
 } from "@mui/material"
 import { useIntl } from "react-intl"

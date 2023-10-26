@@ -12,7 +12,7 @@ import {
     TEST_CARD_SORCERER
 } from "../MockedApiValues"
 import { ICard } from "../../base/utils/Axios/types"
-import AntCard from "../../app/components/Card"
+import { AntCard } from "../../app/components/Card"
 import { checkRenderedCard } from "../testFunctions"
 import { usePlayerCards } from "../../app/Providers/PlayerCards"
 import { Button } from "@mui/material"

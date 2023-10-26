@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from "react"
+import { FC, useState, useEffect } from "react"
 import {
     Typography,
     Grid,
@@ -6,41 +6,10 @@ import {
     Avatar,
     Zoom
 } from "@mui/material"
-import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
-import { styled } from '@mui/material/styles'
 import { ISources, IPlayerSourceState } from "../../base/utils/Axios/types"
 import { useIntl } from "react-intl"
+import { StyledBonusTooltip, StyledLossTooltip } from "./CustomTooltips"
 
-
-const DEFAULT_TOOLTIP_FADE_TIMEOUT = parseInt(process.env.DEFAULT_TOOLTIP_FADE_TIMEOUT || "5000")
-
-const StyledBonusTooltip = styled(({ className, ...props }: TooltipProps) => (
-    <Tooltip {...props} classes={{ popper: className }} />
-))(({ theme }) => ({
-    [`& .${tooltipClasses.tooltip}`]: {
-        backgroundColor: theme.palette.success.main,
-        color: theme.palette.common.white,
-        boxShadow: theme.shadows[1],
-        fontSize: 11
-    },
-    [`& .${tooltipClasses.arrow}`]: {
-        color: theme.palette.success.main
-    }
-}))
-
-const StyledLossTooltip = styled(({ className, ...props }: TooltipProps) => (
-    <Tooltip {...props} classes={{ popper: className }} />
-))(({ theme }) => ({
-    [`& .${tooltipClasses.tooltip}`]: {
-        backgroundColor: theme.palette.error.main,
-        color: theme.palette.common.white,
-        boxShadow: theme.shadows[1],
-        fontSize: 11
-    },
-    [`& .${tooltipClasses.arrow}`]: {
-        color: theme.palette.error.main
-    }
-}))
 
 const Sources: FC<{ sources: ISources | null, title: string, changes: Partial<ISources>, cleanup: () => void }> = ({ sources, title, changes, cleanup }) => {
     const intl = useIntl()
@@ -77,7 +46,7 @@ const Sources: FC<{ sources: ISources | null, title: string, changes: Partial<IS
     useEffect(() => {
         setSourcesData(createSourcesData(sources))
 
-        const timer = setTimeout(() => cleanup(), DEFAULT_TOOLTIP_FADE_TIMEOUT)
+        const timer = setTimeout(() => cleanup(), parseInt(process.env.DEFAULT_TOOLTIP_FADE_TIMEOUT || "5000"))
 
         return (() => clearTimeout(timer))
     }, [sources])

@@ -1,47 +1,18 @@
-import React, { FC } from "react"
+import React, { FC, memo } from "react"
 import {
     Typography,
     Card,
     CardHeader,
     CardMedia,
     CardContent,
-    Avatar,
-    Backdrop
+    Avatar
 } from "@mui/material"
-import { ICard } from "../../base/utils/Axios/types"
-import { useIntl, FormattedMessage } from "react-intl"
-import ApiClient from "../../base/utils/Axios/ApiClient"
-import { useMutation } from "@tanstack/react-query"
-import { AxiosError } from "axios"
+import { useIntl } from "react-intl"
 import { cardLabels } from "../config/cardLabels"
 import { useTheme } from "@mui/material/styles"
+import { IInteractiveCard } from "./types"
+import { getCardStyles } from "./functions"
 
-
-const getCardStyles = (type: ICard["type"]) => {
-    switch (type) {
-        case "building":
-            return { backgroundColor: "#ffe5e5", border: "solid 3px red" }
-
-        case "soldiers":
-            return { backgroundColor: "#d0f0c0", border: "solid 3px green" }
-
-        case "magic":
-            return { backgroundColor: "#afdbf5", border: "solid 3px blue" }
-
-        default:
-            return { backgroundColor: "#faba5f", border: "solid 3px #ff5733" }
-
-    }
-}
-
-export interface IInteractiveCard extends Partial<ICard> {
-    discardFn?: (itemName: string) => void,
-    playFn?: (itemName: string) => void,
-    key: string,
-    sx?: any,
-    discarded?: boolean,
-    disabled?: boolean
-}
 
 const AntCard: FC<Partial<IInteractiveCard>> = ({
     unit,
@@ -212,4 +183,9 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
     )
 }
 
-export default AntCard
+const MemoizedCard = memo((props: Partial<IInteractiveCard>) => AntCard(props))
+
+export {
+    AntCard,
+    MemoizedCard
+}

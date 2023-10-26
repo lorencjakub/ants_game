@@ -5,7 +5,7 @@ import {
     fireEvent,
     waitFor
 } from "../testSetup"
-import Card from "../../app/components/Card"
+import { AntCard } from "../../app/components/Card"
 import ApiClient from "../../base/utils/Axios/ApiClient"
 import { TEST_CARD_WALL } from "../MockedApiValues"
 import { checkRenderedCard } from "../testFunctions"
@@ -13,13 +13,13 @@ import { checkRenderedCard } from "../testFunctions"
 
 describe(("Card component render and funcionalities"), () => {
     test("Render of card in player's hand", () => {
-        render(<Card { ...TEST_CARD_WALL } />)
+        render(<AntCard { ...TEST_CARD_WALL } />)
     
         checkRenderedCard({ ...TEST_CARD_WALL }, "fence +3")
     })
 
     test("Render of card in deck", () => {
-        render(<Card />)
+        render(<AntCard />)
     
         expect(screen.queryByTestId("ant_card.deck.name")).not.toBeInTheDocument()
         expect(screen.queryByTestId("ant_card.deck.description")).not.toBeInTheDocument()
@@ -31,7 +31,7 @@ describe(("Card component render and funcionalities"), () => {
     test("Play a card from player's hand", async () => {
         jest.spyOn(ApiClient, "play").mockImplementation(jest.fn())
     
-        render(<Card { ...TEST_CARD_WALL } playFn={ApiClient.play} />)        
+        render(<AntCard { ...TEST_CARD_WALL } playFn={ApiClient.play} />)        
     
         const card = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
         if (!card) throw Error(`Card ${TEST_CARD_WALL.item_name} not found`)
@@ -42,7 +42,7 @@ describe(("Card component render and funcionalities"), () => {
     test("No play action on card in deck", async () => {
         jest.spyOn(ApiClient, "play").mockImplementation(jest.fn())
     
-        render(<Card />)        
+        render(<AntCard />)        
     
         const card = screen.getByTestId("ant_card.deck")
         if (!card) throw Error("Card in deck not found")
@@ -53,7 +53,7 @@ describe(("Card component render and funcionalities"), () => {
     test("Discard a card from player's hand", async () => {
         jest.spyOn(ApiClient, "discard").mockImplementation(jest.fn())
     
-        render(<Card { ...TEST_CARD_WALL } discardFn={ApiClient.discard} />)
+        render(<AntCard { ...TEST_CARD_WALL } discardFn={ApiClient.discard} />)
 
         const card = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
         if (!card) throw Error(`Card ${TEST_CARD_WALL.item_name} not found`)
@@ -64,7 +64,7 @@ describe(("Card component render and funcionalities"), () => {
     test("No discard action on card in deck", async () => {
         jest.spyOn(ApiClient, "discard").mockImplementation(jest.fn())
     
-        render(<Card { ...TEST_CARD_WALL } />)
+        render(<AntCard { ...TEST_CARD_WALL } />)
 
         const card = screen.getByTestId(`ant_card.${TEST_CARD_WALL.item_name}`)
         if (!card) throw Error("Card in deck not found")
