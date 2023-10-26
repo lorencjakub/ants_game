@@ -39,7 +39,8 @@ export interface IInteractiveCard extends Partial<ICard> {
     playFn?: (itemName: string) => void,
     key: string,
     sx?: any,
-    discarded?: boolean
+    discarded?: boolean,
+    disabled?: boolean
 }
 
 const AntCard: FC<Partial<IInteractiveCard>> = ({
@@ -50,7 +51,8 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
     discardFn,
     playFn,
     sx = {},
-    discarded = false
+    discarded = false,
+    disabled = false
 }) => {
     const theme = useTheme()
     const intl = useIntl()
@@ -62,7 +64,7 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
 
     return (
         <Card
-            onClick={() => playFn && playFn(item_name)}
+            onClick={(disabled) ? () => {} : () => playFn && playFn(item_name)}
             onContextMenu={handleCardRightClick}
             data-testid={`ant_card.${item_name}`}
             sx={{
@@ -75,7 +77,7 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                 ...sx
             }}
         >
-            {(!discarded) ? null:
+            {(!discarded) ? null :
                 <CardMedia
                     component="span"
                     data-testid={`ant_card.${item_name}.discarded_label`}
@@ -106,6 +108,26 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                         {intl.formatMessage({ id: "ant_card.discarded.label", defaultMessage: "DISCARDED" })}
                     </Typography>
                 </CardMedia>
+            }
+            {(!disabled) ? null :
+                <CardMedia
+                    component="span"
+                    data-testid={`ant_card.${item_name}.disabled`}
+                    sx={{
+                        backgroundColor: "#000",
+                        p: 0.5,
+                        cursor: "default"
+                    }}
+                    style={{
+                        position: "absolute",
+                        opacity: 0.9,
+                        backgroundColor: theme.palette.background.paper,
+                        height: "100%",
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center"
+                    }}
+                />
             }
             {
                 (!unit || !price || !cardLabels[item_name as keyof typeof cardLabels]) ? null :

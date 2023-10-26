@@ -567,7 +567,15 @@ const Room: FC<{}> = () => {
                         const randomSuffix = (Math.random() + 1).toString(36).substring(2)
                         const key = `${data.unit}_${data.price}_${data.item_name}_${randomSuffix}`
 
-                        return <Card { ...data } discardFn={memoizedDiscardCard} playFn={memoizedPlayCard} key={key} />
+                        return (
+                            <Card
+                                { ...data }
+                                discardFn={memoizedDiscardCard}
+                                playFn={memoizedPlayCard}
+                                key={key}
+                                disabled={Boolean(myState.sources && (myState.sources[data.unit as keyof ISources] < data.price))}
+                            />
+                        )
                     })}
                 </Grid>
             </Grid>
