@@ -594,7 +594,7 @@ const Room: FC<{}> = () => {
                             ...getCardStyles(discarded.type as ECardTypes)
                         }}
                     >
-                        {(!discarded) ? null :
+                        {(!(discarded as Partial<ICard> & { discarded: boolean }).discarded) ? null :
                             <CardMedia
                                 component="span"
                                 data-testid={`ant_card.${discarded.item_name}.discarded_label`}
