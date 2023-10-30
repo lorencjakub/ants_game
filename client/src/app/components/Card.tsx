@@ -13,13 +13,14 @@ import { cardLabels } from "../config/cardLabels"
 import { useTheme } from "@mui/material/styles"
 import { IInteractiveCard } from "./types"
 import { getCardStyles } from "./functions"
+import { ECardTypes } from "../../base/utils/Axios/types"
 
 
 const AntCard: FC<Partial<IInteractiveCard>> = ({
     unit,
     price,
     item_name = "deck",
-    type = "deck",
+    type = ECardTypes.DECK,
     discardFn,
     playFn,
     sx = {},

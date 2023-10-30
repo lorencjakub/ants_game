@@ -6,7 +6,9 @@ import {
     Grid,
     Backdrop,
     useMediaQuery,
-    Snackbar
+    Snackbar,
+    Card,
+    CardMedia
 } from "@mui/material"
 import { useMutation } from '@tanstack/react-query'
 import ApiClient from '../../base/utils/Axios/ApiClient'
@@ -14,7 +16,8 @@ import {
     ITurnResponse,
     ISources,
     IWinTurnResponse,
-    TSocketJoinRoomResponse
+    TSocketJoinRoomResponse,
+    ECardTypes
 } from '../../base/utils/Axios/types'
 import { AxiosError } from 'axios'
 import { useIntl, FormattedMessage } from "react-intl"
@@ -39,6 +42,7 @@ import {
 } from "./functions"
 import { RoomInfoBackdrop } from '../components/RoomInfoBackdrop'
 import { ChatDrawer } from '../components/CustomChatDrawer'
+import { getCardStyles } from "../components/functions"
 
 
 const Room: FC<{}> = () => {
@@ -537,7 +541,6 @@ const Room: FC<{}> = () => {
             }
             <Snackbar
                 open={smallScreen && showStopwatches}
-                autoHideDuration={parseInt(process.env.DEFAULT_TURN_TIMEOUT || "60")}
                 message={
                     <Grid
                         container
@@ -572,9 +575,48 @@ const Room: FC<{}> = () => {
                         background: theme.palette.background.paper,
                         py: 0,
                         pt: 1,
-                        mb: "64px"
+                        mb: "64px",
+                        mr: 13
                     }
                 }}
+            />
+            <Snackbar
+                open={smallScreen && (Object.keys(discarded).length !== 0)}
+                message={
+                    <Card
+                        data-testid={`ant_card.${discarded.item_name}_discarded`}
+                        sx={{
+                            position: "relative",
+                            m: 0.5 * 0.5,
+                            height: 195 * 0.5,
+                            width: 130 * 0.5,
+                            cursor: "default",
+                            ...getCardStyles(discarded.type as ECardTypes)
+                        }}
+                    >
+                        <CardMedia
+                            component="img"
+                            data-testid={`ant_card.${discarded.item_name}.avatar`}
+                            image={`/cards/${discarded.item_name}.svg`}
+                            sx={{
+                                p: 0,
+                                m: 0,
+                                height: "100%",
+                                objectFit: "contain"
+                            }}
+                        />
+                    </Card>
+                }
+                ContentProps={{
+                    sx: {
+                        background: theme.palette.background.paper,
+                        py: 0,
+                        pt: 1,
+                        mb: "64px",
+                        ml: 33
+                    }
+                }}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             />
         </Paper>
     )

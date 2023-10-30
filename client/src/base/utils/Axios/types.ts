@@ -14,13 +14,26 @@ export type TSocketJoinRoomResponse = {
     [playerToken: string]: ISources
 }
 
+export enum ECardTypes {
+    BUILDING = "building",
+    SOLDIERS = "soldiers",
+    MAGIC = "magic",
+    DECK = "deck"
+}
+
+export enum EUnits {
+    BRICKS = "bricks",
+    WEAPONS = "weapons",
+    CRYSTALS = "crystals"
+}
+
 export interface ICard {
-    unit: "bricks" | "weapons" | "crystals",
+    unit: EUnits,
     price: number,
     item_name: string,
     cardName: string | ReactJSXElement,
     message: string | ReactJSXElement,
-    type: "building" | "soldiers" | "magic" | "deck"
+    type: ECardTypes
 }
 
 export interface ISources {

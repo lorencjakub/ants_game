@@ -5,7 +5,7 @@ import { ICard } from "../../../base/utils/Axios/types"
 interface IPlayerCardsContext {
     playerCards: ICard[],
     setPlayerCards: (data: ICard[], eventName: string) => void,
-    discarded: ICard | {},
+    discarded: Partial<ICard>,
     setDiscardedCard: (card: ICard) => void
 }
 
