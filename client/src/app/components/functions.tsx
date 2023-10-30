@@ -26,10 +26,10 @@ const messagesCacheReducer = (state: TIncomingMessage[], action: TIncomingMessag
 
     var messages = [ ...state ]
     messages.push(action)
-    const maxChatLength = parseInt(String(process.env.MAX_CHAT_ROWS)) || 10
+    const maxChatLength = parseInt(String(process.env.MAX_CHAT_ROWS)) || 6
 
     if (messages.length > maxChatLength) {
-        return messages.slice(messages.length - 10)
+        return messages.slice(messages.length - 6)
     }
 
     return messages

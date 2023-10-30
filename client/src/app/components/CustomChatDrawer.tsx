@@ -26,7 +26,7 @@ const CustomDrawer = styled(Drawer)(
             [`& .${drawerClasses.paper}`]: {
                 position: "relative",
                 whiteSpace: "nowrap",
-                height: "calc(100vh - 103px - 64px - 64px)",
+                height: "100%",
                 top: "103px",
                 overflow: "hidden",
                 transition: theme?.transitions.create("width", {
@@ -106,7 +106,8 @@ const ChatDrawer: FC<{}> = () => {
                         overflow: 'hidden'
                     }}
                     sx={{
-                        minHeight: 300,
+                        // minHeight: 300,
+                        height: "100%",
                         m: 0,
                         p: 0
                     }}
