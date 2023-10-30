@@ -26,7 +26,7 @@ const CustomDrawer = styled(Drawer)(
             [`& .${drawerClasses.paper}`]: {
                 position: "relative",
                 whiteSpace: "nowrap",
-                height: "calc(100vh - 103px - 64px)",
+                height: "calc(100vh - 103px - 64px - 64px)",
                 top: "103px",
                 overflow: "hidden",
                 transition: theme?.transitions.create("width", {

@@ -253,7 +253,6 @@ const Room: FC<{}> = () => {
                             borderRadius: 3,
                             borderColor: theme.palette.text.primary
                         }}
-                        order={{ xs: 2, md: 1 }}
                     >
                         {
                             (mySources) ?
@@ -300,7 +299,6 @@ const Room: FC<{}> = () => {
                                 m: 0,
                                 p: 0
                             }}
-                            order={{ xs: 1, md: 2 }}
                         >
                             <Grid
                                 item
@@ -411,7 +409,6 @@ const Room: FC<{}> = () => {
                             borderRadius: 3,
                             borderColor: theme.palette.text.primary
                         }}
-                        order={{ xs: 3 }}
                     >
                         {
                             (enemySources.sources) ?
