@@ -3,7 +3,8 @@ import {
     Grid,
     AppBar,
     Typography,
-    Box
+    Box,
+    useMediaQuery
 } from "@mui/material"
 import { useThemeMode } from "../../base/Providers/ThemeMode"
 import { useTheme as useMuiTheme } from "@mui/material/styles"
@@ -14,6 +15,7 @@ const PageHeader: FC<{ pageTitle: string, appBarContent?: ReactNode }> = ({ page
     const { themeMode } = useThemeMode()
     const theme = useMuiTheme()
     const navigate = useNavigate()
+    const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
     
     useEffect(() => {
         document.querySelectorAll("[class*='MuiSwitch-track']")[0].setAttribute("style", `background-color: ${theme.palette.text.disabled}`) 
@@ -63,17 +65,18 @@ const PageHeader: FC<{ pageTitle: string, appBarContent?: ReactNode }> = ({ page
                     </Grid>
                     <Grid
                         item
-                        xs={9}
+                        xs={6}
+                        md={9}
                         justifyContent="center"
                     >
                         <Typography
                             variant="h4"
                             color="text.primary"
                             noWrap
-                            sx={{ ml: 0 }}
                             onClick={() => navigate("/")}
                             style={{
-                                cursor: "pointer"
+                                cursor: "pointer",
+                                marginLeft: (smallScreen) ? 42 : 0
                             }}
                         >
                             {pageTitle}
@@ -81,7 +84,8 @@ const PageHeader: FC<{ pageTitle: string, appBarContent?: ReactNode }> = ({ page
                     </Grid>
                     <Grid
                         item
-                        xs={2}
+                        xs={5}
+                        md={2}
                         justifyContent="flex-end"
                         data-testid="containers.layout.header.appbar.tools"
                         alignItems="center"

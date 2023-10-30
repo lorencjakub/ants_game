@@ -4,12 +4,16 @@ import { gameSocket, EventNames } from '../../base/Providers/SocketIo'
 import {
     Box,
     CircularProgress,
-    Typography
+    Typography,
+    useMediaQuery
 } from "@mui/material"
+import { useTheme } from "@mui/material/styles"
 
 
 const Stopwatches: FC<{}> = () => {
     const { guid } = useParams()
+    const theme = useTheme()
+    const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
     const [value, setValue] = useState<number>(parseInt(process.env.DEFAULT_TURN_TIMEOUT || "60"))
 
     var timer: NodeJS.Timer
@@ -50,7 +54,7 @@ const Stopwatches: FC<{}> = () => {
                     variant="caption"
                     component="div"
                     color="text.secondary"
-                    sx={{ pb: 1 }}
+                    sx={{ pb: (smallScreen) ? 0 : 1 }}
                 >
                     {value}
                 </Typography>

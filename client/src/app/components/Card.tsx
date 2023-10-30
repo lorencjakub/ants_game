@@ -5,7 +5,8 @@ import {
     CardHeader,
     CardMedia,
     CardContent,
-    Avatar
+    Avatar,
+    useMediaQuery
 } from "@mui/material"
 import { useIntl } from "react-intl"
 import { cardLabels } from "../config/cardLabels"
@@ -23,10 +24,12 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
     playFn,
     sx = {},
     discarded = false,
-    disabled = false
+    disabled = false,
+    scale = 1
 }) => {
     const theme = useTheme()
     const intl = useIntl()
+    const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
 
     const handleCardRightClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.preventDefault()
@@ -40,9 +43,9 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
             data-testid={`ant_card.${item_name}`}
             sx={{
                 position: "relative",
-                m: 0.5,
-                height: 195,
-                width: 130,
+                m: 0.5 * scale,
+                height: 195 * scale,
+                width: 130 * scale,
                 cursor: (playFn && discardFn) ? "pointer" : "default",
                 ...getCardStyles(type),
                 ...sx
@@ -54,7 +57,7 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                     data-testid={`ant_card.${item_name}.discarded_label`}
                     sx={{
                         backgroundColor: "#000",
-                        p: 0.5
+                        p: 0.5 * scale
                     }}
                     style={{
                         position: "absolute",
@@ -73,7 +76,8 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                             backgroundColor: "#000",
                             width: "100%",
                             display: "flex",
-                            justifyContent: "center"
+                            justifyContent: "center",
+                            fontSize: `calc(${theme.typography.body1.fontSize} * ${scale}`
                         }}
                     >
                         {intl.formatMessage({ id: "ant_card.discarded.label", defaultMessage: "DISCARDED" })}
@@ -86,7 +90,7 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                     data-testid={`ant_card.${item_name}.disabled`}
                     sx={{
                         backgroundColor: "#000",
-                        p: 0.5,
+                        p: 0.5 * scale,
                         cursor: "default"
                     }}
                     style={{
@@ -109,8 +113,8 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                                 src={`/cards/${unit}.svg`}
                                 sx={{
                                     borderRadius: 0,
-                                    width: 20,
-                                    height: 20
+                                    width: 20 * scale,
+                                    height: 20 * scale
                                 }}
                                 data-testid={`ant_card.${item_name}.unit`}
                             />
@@ -121,16 +125,17 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                                 textAlign="center"
                                 data-testid={`ant_card.${item_name}.price`}
                                 sx={{
-                                    mr: 1,
-                                    mt: 0.25,
-                                    color: "#000"
+                                    mr: 1 * scale,
+                                    mt: (smallScreen) ? 0 : 0.25 * scale,
+                                    color: "#000",
+                                    fontSize: `calc(${theme.typography.body1.fontSize} * ${scale}`
                                 }}
                             >
                                 {price}
                             </Typography>
                         }
                         sx={{
-                            p: 1,
+                            p: 1 * scale,
                             m: 0
                         }}
                     />
@@ -138,12 +143,14 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                         variant="body2" 
                         textAlign="center"
                         sx={{
-                            p: 0,
+                            p: (smallScreen) ? 0.5 : 0,
                             m: 0,
-                            mb: 1,
-                            color: "#000"
+                            mb: (smallScreen) ? 0 : 1,
+                            color: "#000",
+                            fontSize: `calc(${theme.typography.body2.fontSize} * ${scale}`
                         }}
                         data-testid={`ant_card.${item_name}.name`}
+                        noWrap={smallScreen}
                     >
                         {cardLabels[item_name as keyof typeof cardLabels].cardName || ""}
                     </Typography>
@@ -154,10 +161,10 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                 data-testid={`ant_card.${item_name}.avatar`}
                 image={`/cards/${item_name}.svg`}
                 sx={{
-                    p: (item_name == "deck") ? 3 : 0,
+                    p: (item_name == "deck") ? 3 * scale : 0,
                     m: 0,
-                    maxHeight: (item_name == "deck") ? undefined : 60,
-                    height: (item_name == "deck") ? 195 : undefined,
+                    maxHeight: (item_name == "deck") ? undefined : 60 * scale,
+                    height: (item_name == "deck") ? 195 * scale : undefined,
                     objectFit: "contain"
                 }}
             />
@@ -169,10 +176,10 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                         variant="body2" 
                         textAlign="center"
                         sx={{
-                            p: 0,
+                            pb: (smallScreen) ? 1 : 0,
                             m: 0,
-                            fontSize: 11,
-                            color: "#000"
+                            color: "#000",
+                            fontSize: `calc(${theme.typography.body2.fontSize} * ${scale}`
                         }}
                     >
                         {cardLabels[item_name as keyof typeof cardLabels].message || ""}

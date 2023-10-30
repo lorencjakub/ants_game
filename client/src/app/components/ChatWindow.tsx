@@ -2,8 +2,10 @@ import { FC, useEffect, useReducer } from "react"
 import {
     Paper,
     Grid,
-    Typography
+    Typography,
+    useMediaQuery
 } from '@mui/material'
+import { useTheme } from "@mui/material/styles"
 import { EventNames, chatSocket } from "../../base/Providers/SocketIo"
 import { NewMessage } from "./NewMessageRow"
 import { TIncomingMessage } from "./types"
@@ -11,6 +13,8 @@ import { messagesCacheReducer, initMessages } from "./functions"
 
 
 const ChatWindow: FC<{}> = () => {
+    const theme = useTheme()
+    const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
     const [messages, addMessage] = useReducer<(state: TIncomingMessage[], action: TIncomingMessage) => TIncomingMessage[]>(messagesCacheReducer, initMessages)
 
     useEffect(() => {
@@ -34,7 +38,8 @@ const ChatWindow: FC<{}> = () => {
             <Paper
                 sx={{
                     p: 1,
-                    minHeight: 139
+                    minHeight: 139,
+                    height: (smallScreen) ? 220 : undefined
                 }}
                 elevation={3}
             >

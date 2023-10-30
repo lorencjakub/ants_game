@@ -9,7 +9,8 @@ import {
     Box,
     Grid,
     Select,
-    MenuItem
+    MenuItem,
+    useMediaQuery
 } from '@mui/material'
 import { useRoutes } from 'react-router-dom'
 import routes from '../../app/config/routes'
@@ -28,6 +29,7 @@ const Page: FC<{}> = () => {
     const theme = useMuiTheme()
     const { locale, setLocale, getLocaleFlagUrl, allLocales } = useLocale()
     const locales = allLocales || []
+    const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
 
     return (
         <div
@@ -61,7 +63,7 @@ const Page: FC<{}> = () => {
                     }}
                 >
                     <PageHeader
-                        pageTitle="ANTS ONLINE"
+                        pageTitle={`ANTS ${(smallScreen) ? "" : "ONLINE"}`}
                         appBarContent={
                             <React.Fragment>
                                 <Select

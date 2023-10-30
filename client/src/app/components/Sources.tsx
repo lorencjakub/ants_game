@@ -4,16 +4,20 @@ import {
     Grid,
     Stack,
     Avatar,
-    Zoom
+    Zoom,
+    useMediaQuery
 } from "@mui/material"
 import { ISources, IPlayerSourceState } from "../../base/utils/Axios/types"
 import { useIntl } from "react-intl"
+import { useTheme } from "@mui/material/styles"
 import { StyledBonusTooltip, StyledLossTooltip } from "./CustomTooltips"
 
 
 const Sources: FC<{ sources: ISources | null, title: string, changes: Partial<ISources>, cleanup: () => void }> = ({ sources, title, changes, cleanup }) => {
     const intl = useIntl()
+    const theme = useTheme()
     const [sourcesData, setSourcesData] = useState<IPlayerSourceState[]>([])
+    const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
 
     const sourcesNames = {
         "bricks": intl.formatMessage({ id: "sources.bricks", defaultMessage: "Bricks" }),
@@ -65,7 +69,8 @@ const Sources: FC<{ sources: ISources | null, title: string, changes: Partial<IS
             }}
             sx={{
                 m: 0,
-                p: 0
+                p: 0,
+                pb: (smallScreen) ? 1 : undefined
             }}
         >
             <Typography
@@ -89,8 +94,10 @@ const Sources: FC<{ sources: ISources | null, title: string, changes: Partial<IS
                             key={`${key}_stack`}
                             direction="row"
                             alignItems="center"
-                            sx={{
-                                width: 150
+                            style={{
+                                width: (smallScreen) ? 80 : 150,
+                                display: "flex",
+                                justifyContent: "space-between"
                             }}
                         >
                             <Avatar
@@ -109,17 +116,18 @@ const Sources: FC<{ sources: ISources | null, title: string, changes: Partial<IS
                                 variant="body1"
                                 textAlign="start"
                                 sx={{
-                                    mx: 2,
-                                    minWidth: 80
+                                    mx: (smallScreen) ? 0 : 2,
+                                    minWidth: (smallScreen) ? undefined : 80,
+                                    width: (smallScreen) ? 0 : undefined
                                 }}
                             >
-                                {`${name}: `}
+                                {(smallScreen) ? "" : `${name}: `}
                             </Typography>
                             {
                                 (changes[unit as keyof ISources]) ? 
                                 <CustomTooltip
                                     title={`${((changes[unit as keyof ISources] || -1) > 0) ? "+" : ""}${changes[unit as keyof ISources] || 0}`}
-                                    placement="right"
+                                    placement={(smallScreen) ? "left" : "right"}
                                     arrow
                                     disableFocusListener
                                     disableHoverListener
@@ -127,6 +135,7 @@ const Sources: FC<{ sources: ISources | null, title: string, changes: Partial<IS
                                     disableInteractive
                                     open={Boolean(changes[unit as keyof ISources])}
                                     TransitionComponent={Zoom}
+                                    sx={{ zIndex: theme.zIndex.tooltip / 10 }}
                                 >
                                     <Typography
                                         data-testid={`source_row.${unit}.amount`}

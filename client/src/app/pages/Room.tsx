@@ -4,7 +4,9 @@ import {
     Paper,
     Typography,
     Grid,
-    Backdrop
+    Backdrop,
+    useMediaQuery,
+    Snackbar
 } from "@mui/material"
 import { useMutation } from '@tanstack/react-query'
 import ApiClient from '../../base/utils/Axios/ApiClient'
@@ -36,15 +38,17 @@ import {
     playerSourcesReducer
 } from "./functions"
 import { RoomInfoBackdrop } from '../components/RoomInfoBackdrop'
+import { ChatDrawer } from '../components/CustomChatDrawer'
 
 
 const Room: FC<{}> = () => {
     const { guid } = useParams()
     const intl = useIntl()
     const theme = useTheme()
-    const { enqueueSnackbar } = useSnackbar()
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar()
     const navigate = useNavigate()
     const { parseErrorMessage } = useErrors()
+    const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
 
     const [searchParams, setSearchParams] = useSearchParams()
     const [creatingRoom, setCreatingRoom] = useState<boolean>(true)
@@ -188,8 +192,12 @@ const Room: FC<{}> = () => {
         :
         <Paper
             elevation={0}
-            sx={{ m: 2, p: 2 }}
+            sx={{
+                m: (smallScreen) ? 0.5 : 2,
+                p: (smallScreen) ? 0.5 : 2
+            }}
         >
+            {(smallScreen) ? <ChatDrawer /> : null}
             <Grid
                 data-testid="pages.room"
                 container
@@ -218,15 +226,17 @@ const Room: FC<{}> = () => {
                         overflow: 'hidden'
                     }}
                     sx={{
-                        minHeight: 300,
+                        minHeight: (smallScreen) ? undefined : 300,
                         m: 0,
-                        p: 0
+                        p: 0,
+                        my: 2
                     }}
                 >
                     <Grid
                         data-testid="pages.room.my_panel"
                         item
-                        xs={2}
+                        xs={6}
+                        md={2}
                         justifyContent="center"
                         alignItems="start"
                         style={{
@@ -234,18 +244,25 @@ const Room: FC<{}> = () => {
                             overflow: 'hidden'
                         }}
                         sx={{
-                            minHeight: 300,
+                            minHeight: (smallScreen) ? undefined : 300,
                             m: 0,
                             p: 0,
+                            my: (smallScreen) ? 2 : undefined,
+                            maxWidth: (smallScreen) ? 120 : undefined,
                             border: "solid 2px",
                             borderRadius: 3,
                             borderColor: theme.palette.text.primary
                         }}
+                        order={{ xs: 2, md: 1 }}
                     >
                         {
                             (mySources) ?
                             <Sources
-                                title={intl.formatMessage({ id: "pages.room.player_panel.my_sources", defaultMessage: "My sources" })}
+                                title={(smallScreen) ? 
+                                    intl.formatMessage({ id: "pages.room.player_panel.you", defaultMessage: "You" })
+                                    :
+                                    intl.formatMessage({ id: "pages.room.player_panel.your_sources", defaultMessage: "Your sources" })
+                                }
                                 sources={mySources.sources}
                                 changes={mySources.changes}
                                 cleanup={memoizedCleanup}
@@ -263,115 +280,122 @@ const Room: FC<{}> = () => {
                             </Typography>
                         }
                     </Grid>
-                    <Grid
-                        data-testid="pages.room.battlefield"
-                        item
-                        direction="row"
-                        xs={8}
-                        justifyContent="center"
-                        alignItems="start"
-                        style={{
-                            display: 'flex',
-                            overflow: 'hidden'
-                        }}
-                        sx={{
-                            minHeight: 300,
-                            m: 0,
-                            p: 0
-                        }}
-                    >
+                    {(smallScreen) ?
+                        null
+                        :
                         <Grid
+                            data-testid="pages.room.battlefield"
                             item
-                            xs={8}
-                            direction="column"
+                            direction={(smallScreen) ? "column" : "row"}
+                            xs={12}
+                            md={8}
                             justifyContent="center"
-                            sx={{
-                                ml: 4
+                            alignItems="start"
+                            style={{
+                                display: 'flex',
+                                overflow: 'hidden'
                             }}
+                            sx={{
+                                minHeight: 300,
+                                m: 0,
+                                p: 0
+                            }}
+                            order={{ xs: 1, md: 2 }}
                         >
                             <Grid
-                                container
-                                direction="row"
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between"
+                                item
+                                xs={8}
+                                direction="column"
+                                justifyContent="center"
+                                sx={{
+                                    ml: (smallScreen) ? 0 : 4,
+                                    mt: (smallScreen) ? 10 : undefined
                                 }}
                             >
-                                <Typography
-                                    variant="h5"
-                                    sx={{
-                                        mb: 2
+                                <Grid
+                                    container
+                                    direction={(smallScreen) ? "column" : "row"}
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "space-between"
                                     }}
                                 >
-                                    {intl.formatMessage({ id: "chat_window.title", defaultMessage: "Battle Chat" })}
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    onClick={() => {
-                                        if (gameSocket.connected) gameSocket.emit(EventNames.LEAVE_GAME, sessionStorage.getItem("Token") || "")
-                                    }}
-                                    sx={{
-                                        backgroundColor: "text.primary",
-                                        maxWidth: 250,
-                                        height: 30,
-                                        px: 2,
-                                        mt: 0.3
-                                    }}
-                                >
-                                    {intl.formatMessage({ id: "processing_backdrop_message.lock_button", defaultMessage: "Leave battlefield" })}
-                                </Button>
-                            </Grid>
-                            <ChatWindow />
-                        </Grid>
-                        <Grid
-                            item
-                            xs={4}
-                            direction="column"
-                            justifyContent="center"
-                        >
-                            <Grid
-                                container
-                                direction="row"
-                                justifyContent="space-between"
-                                sx={{ px: 2 }}
-                            >
-                                <Typography
-                                    variant="h5"
-                                    textAlign="center"
-                                    sx={{
-                                        mb: 2
-                                    }}
-                                >
-                                    <FormattedMessage
-                                        id="pages.room.battlefield.on_turn"
-                                        defaultMessage="On turn: {player}"
-                                        values={{
-                                            player: (
-                                                (onTurn === sessionStorage.getItem("Token")) ?
-                                                intl.formatMessage({ id: "pages.room.battlefield.on_turn.you", defaultMessage: "You" })
-                                                :
-                                                intl.formatMessage({ id: "pages.room.battlefield.on_turn.enemy", defaultMessage: "Enemy" })
-                                            )
+                                    <Typography
+                                        variant="h5"
+                                        sx={{
+                                            mb: 2
                                         }}
-                                    />
-                                </Typography>
-                                {(showStopwatches) ? <Stopwatches /> : null
-                                }
+                                    >
+                                        {intl.formatMessage({ id: "chat_window.title", defaultMessage: "Battle Chat" })}
+                                    </Typography>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => {
+                                            if (gameSocket.connected) gameSocket.emit(EventNames.LEAVE_GAME, sessionStorage.getItem("Token") || "")
+                                        }}
+                                        sx={{
+                                            backgroundColor: "text.primary",
+                                            maxWidth: 250,
+                                            height: 30,
+                                            px: 2,
+                                            mt: 0.3
+                                        }}
+                                    >
+                                        {intl.formatMessage({ id: "processing_backdrop_message.lock_button", defaultMessage: "Leave battlefield" })}
+                                    </Button>
+                                </Grid>
+                                <ChatWindow />
                             </Grid>
                             <Grid
-                                container
-                                direction="row"
+                                item
+                                xs={4}
+                                direction="column"
                                 justifyContent="center"
                             >
-                                <AntCard sx={{ mt: 0 }} />
-                                {(Object.keys(discarded).length === 0) ? null : <AntCard { ...discarded } sx={{ mt: 0 }} />}
+                                <Grid
+                                    container
+                                    direction="row"
+                                    justifyContent="space-between"
+                                    sx={{ px: 2 }}
+                                >
+                                    <Typography
+                                        variant="h5"
+                                        textAlign="center"
+                                        sx={{
+                                            mb: 2
+                                        }}
+                                    >
+                                        <FormattedMessage
+                                            id="pages.room.battlefield.on_turn"
+                                            defaultMessage="On turn: {player}"
+                                            values={{
+                                                player: (
+                                                    (onTurn === sessionStorage.getItem("Token")) ?
+                                                    intl.formatMessage({ id: "pages.room.battlefield.on_turn.you", defaultMessage: "You" })
+                                                    :
+                                                    intl.formatMessage({ id: "pages.room.battlefield.on_turn.enemy", defaultMessage: "Enemy" })
+                                                )
+                                            }}
+                                        />
+                                    </Typography>
+                                    {(showStopwatches) ? <Stopwatches /> : null}
+                                </Grid>
+                                <Grid
+                                    container
+                                    direction="row"
+                                    justifyContent="center"
+                                >
+                                    <AntCard sx={{ mt: 0 }} />
+                                    {(Object.keys(discarded).length === 0) ? null : <AntCard { ...discarded } sx={{ mt: 0 }} />}
+                                </Grid>
                             </Grid>
                         </Grid>
-                    </Grid>
+                    }
                     <Grid
                         data-testid="pages.room.enemy_panel"
                         item
-                        xs={2}
+                        xs={6}
+                        md={2}
                         justifyContent="center"
                         alignItems={(enemySources.sources) ? "start" : undefined}
                         style={{
@@ -379,18 +403,24 @@ const Room: FC<{}> = () => {
                             overflow: 'hidden'
                         }}
                         sx={{
-                            minHeight: 300,
+                            minHeight: (smallScreen) ? undefined : 300,
                             m: 0,
                             p: 0,
+                            my: 2,
                             border: "solid 2px",
                             borderRadius: 3,
                             borderColor: theme.palette.text.primary
                         }}
+                        order={{ xs: 3 }}
                     >
                         {
                             (enemySources.sources) ?
                             <Sources
-                                title={intl.formatMessage({ id: "pages.room.player_panel.enemy_sources", defaultMessage: "Enemy's sources" })}
+                                title={(smallScreen) ?
+                                    intl.formatMessage({ id: "pages.room.player_panel.enemy", defaultMessage: "Enemy" })
+                                    :
+                                    intl.formatMessage({ id: "pages.room.player_panel.enemy_sources", defaultMessage: "Enemy's sources" })
+                                }
                                 sources={enemySources.sources}
                                 changes={enemySources.changes}
                                 cleanup={memoizedCleanup}
@@ -436,18 +466,19 @@ const Room: FC<{}> = () => {
                     data-testid="pages.room.card_panel"
                     container
                     spacing={1}
+                    xs={12}
                     justifyContent="center"
                     alignItems="center"
                     direction="row"
                     style={{
-                        display: 'flex',
-                        overflow: 'hidden',
+                        overflow: (smallScreen) ? "auto" : 'hidden',
                     }}
                     sx={{
                         backgroundColor: "background.default",
                         height: 200,
                         m: 0,
-                        mt: 10,
+                        mt: (smallScreen) ? 0 : 10,
+                        mb: (smallScreen) ? "64px" : undefined,
                         p: 0,
                         position: "relative"
                     }}
@@ -486,6 +517,7 @@ const Room: FC<{}> = () => {
                                 playFn={memoizedPlayCard}
                                 key={key}
                                 disabled={Boolean(mySources.sources && (mySources.sources[data.unit as keyof ISources] < data.price))}
+                                scale={(smallScreen) ? 0.75 : undefined}
                             />
                         )
                     })}
@@ -506,6 +538,47 @@ const Room: FC<{}> = () => {
                     }}
                 />
             }
+            <Snackbar
+                open={smallScreen && showStopwatches}
+                autoHideDuration={parseInt(process.env.DEFAULT_TURN_TIMEOUT || "60")}
+                message={
+                    <Grid
+                        container
+                        direction="row"
+                    >
+                        <Typography
+                            variant="h5"
+                            color="text.primary"
+                            textAlign="center"
+                            sx={{
+                                mr: 4
+                            }}
+                        >
+                            <FormattedMessage
+                                id="pages.room.battlefield.on_turn"
+                                defaultMessage="On turn: {player}"
+                                values={{
+                                    player: (
+                                        (onTurn === sessionStorage.getItem("Token")) ?
+                                        intl.formatMessage({ id: "pages.room.battlefield.on_turn.you", defaultMessage: "You" })
+                                        :
+                                        intl.formatMessage({ id: "pages.room.battlefield.on_turn.enemy", defaultMessage: "Enemy" })
+                                    )
+                                }}
+                            />
+                        </Typography>
+                        {(showStopwatches) ? <Stopwatches /> : null}
+                    </Grid>
+                }
+                ContentProps={{
+                    sx: {
+                        background: theme.palette.background.paper,
+                        py: 0,
+                        pt: 1,
+                        mb: "64px"
+                    }
+                }}
+            />
         </Paper>
     )
 }

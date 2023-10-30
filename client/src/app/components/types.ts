@@ -7,7 +7,8 @@ interface IInteractiveCard extends Partial<ICard> {
     key: string,
     sx?: any,
     discarded?: boolean,
-    disabled?: boolean
+    disabled?: boolean,
+    scale?: number
 }
 
 type TIncomingMessage = { time: string, message: string, player: string }
