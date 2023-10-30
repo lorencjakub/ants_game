@@ -78,7 +78,7 @@ const AntCard: FC<Partial<IInteractiveCard>> = ({
                             width: "100%",
                             display: "flex",
                             justifyContent: "center",
-                            fontSize: `calc(${theme.typography.body1.fontSize} * ${scale}`
+                            fontSize: `calc(${theme.typography.body1.fontSize} * ${scale})`
                         }}
                     >
                         {intl.formatMessage({ id: "ant_card.discarded.label", defaultMessage: "DISCARDED" })}

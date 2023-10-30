@@ -584,7 +584,7 @@ const Room: FC<{}> = () => {
                 open={smallScreen && (Object.keys(discarded).length !== 0)}
                 message={
                     <Card
-                        data-testid={`ant_card.${discarded.item_name}_discarded`}
+                        data-testid={`ant_card.${discarded.item_name}_used`}
                         sx={{
                             position: "relative",
                             m: 0.5 * 0.5,
@@ -594,6 +594,39 @@ const Room: FC<{}> = () => {
                             ...getCardStyles(discarded.type as ECardTypes)
                         }}
                     >
+                        {(!discarded) ? null :
+                            <CardMedia
+                                component="span"
+                                data-testid={`ant_card.${discarded.item_name}.discarded_label`}
+                                sx={{
+                                    backgroundColor: "#000",
+                                    p: 0.5 * 0.5
+                                }}
+                                style={{
+                                    position: "absolute",
+                                    opacity: 0.9,
+                                    backgroundColor: theme.palette.background.paper,
+                                    height: "100%",
+                                    width: "100%",
+                                    display: "flex",
+                                    alignItems: "center"
+                                }}
+                            >
+                                <Typography
+                                    color="text.primary"
+                                    variant="body1"
+                                    sx={{
+                                        backgroundColor: "#000",
+                                        width: "100%",
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        fontSize: `calc(${theme.typography.body1.fontSize} * 0.5)`
+                                    }}
+                                >
+                                    {intl.formatMessage({ id: "ant_card.discarded.label", defaultMessage: "DISCARDED" })}
+                                </Typography>
+                            </CardMedia>
+                        }
                         <CardMedia
                             component="img"
                             data-testid={`ant_card.${discarded.item_name}.avatar`}
