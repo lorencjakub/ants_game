@@ -1,23 +1,29 @@
-import { FC, useEffect, useReducer } from "react"
+import { FC, useEffect} from "react"
 import {
     Paper,
     Grid,
-    Typography
+    Typography,
+    useMediaQuery
 } from '@mui/material'
 import { EventNames, chatSocket } from "../../base/Providers/SocketIo"
 import { NewMessage } from "./NewMessageRow"
 import { TIncomingMessage } from "./types"
-import { messagesCacheReducer, initMessages } from "./functions"
+import { useMessages } from "../Providers/Messages"
+import { useTheme } from '@mui/material/styles'
 
 
 const ChatWindow: FC<{}> = () => {
-    const [messages, addMessage] = useReducer<(state: TIncomingMessage[], action: TIncomingMessage) => TIncomingMessage[]>(messagesCacheReducer, initMessages)
+    const theme = useTheme()
+    const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
+    const { messages = [], handleNewMessage } = useMessages()
 
     useEffect(() => {
+        if (smallScreen) return
+
         if (!chatSocket.connected) chatSocket.connect()
 
         chatSocket.on(EventNames.SERVER_CHAT_MESSAGE, (data: TIncomingMessage) => {
-            addMessage(data)
+            handleNewMessage && handleNewMessage(data)
         })
 
         return () => {
@@ -38,10 +44,14 @@ const ChatWindow: FC<{}> = () => {
                     overflowY: "auto"
                 }}
                 elevation={3}
+                style={{
+                    display: "flex",
+                    flexDirection: "column-reverse"
+                }}
             >
-                {messages.map((data) => (
+                {Object.entries(messages).map(([i, data]) => (
                     <Typography
-                        key={`${data.player}-${data.time}`}
+                        key={`${data.player}-${data.time}-${i}`}
                         variant="body2"
                         color={(data.player == sessionStorage.getItem("Token")) ? "text.primary" : "text.secondary"}
                         fontStyle='italic'

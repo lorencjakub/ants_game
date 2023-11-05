@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useState, useEffect } from 'react'
 import {
     Button,
     Typography,
@@ -18,6 +18,9 @@ import { useIntl } from "react-intl"
 import { ChatWindow } from '../components/ChatWindow'
 import { EventNames, gameSocket } from '../../base/Providers/SocketIo'
 import { useTheme } from '@mui/material/styles'
+import { TIncomingMessage } from './types'
+import { chatSocket } from '../../base/Providers/SocketIo'
+import { useMessages } from '../Providers/Messages'
 
 
 const CustomDrawer = styled(Drawer)(
@@ -45,8 +48,24 @@ const ChatDrawer: FC<{}> = () => {
     const theme = useTheme()
     const smallScreen = useMediaQuery(theme.breakpoints.down("md"))
     const [chatOpen, setOpenChat] = useState<boolean>(false)
+    const { handleNewMessage, newMessagesCount, clearNewMessages } = useMessages()
 
-    const toggleDrawer = () => setOpenChat(current => !current)
+    const toggleDrawer = () => {
+        setOpenChat(current => !current)
+        clearNewMessages && clearNewMessages()
+    }
+
+    useEffect(() => {
+        if (!chatSocket.connected) chatSocket.connect()
+
+        chatSocket.on(EventNames.SERVER_CHAT_MESSAGE, (data: TIncomingMessage) => {
+            handleNewMessage && handleNewMessage(data)
+        })
+
+        return () => {
+            chatSocket.disconnect()
+        }
+    }, [])
 
     return (
         <React.Fragment>
@@ -66,6 +85,25 @@ const ChatDrawer: FC<{}> = () => {
                 onClick={toggleDrawer}
             >
                 {(chatOpen) ? <LeftIcon /> : <RightIcon />}
+                {((newMessagesCount == 0) || chatOpen) ?
+                    null
+                    :
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        style={{
+                            position: "fixed",
+                            left: 40,
+                            top: 105,
+                            backgroundColor: theme.palette.success.main,
+                            borderRadius: "50%",
+                            height: 20,
+                            minWidth: 20
+                        }}
+                    >
+                        {newMessagesCount}
+                    </Typography>
+                }
             </IconButton>
             <Button
                 variant="contained"
@@ -92,6 +130,9 @@ const ChatDrawer: FC<{}> = () => {
                 anchor="left"
                 open={chatOpen}
                 onClose={toggleDrawer}
+                ModalProps={{
+                    keepMounted: false
+                }}
             >
                 <Grid
                     data-testid="pages.room.battlefield"
@@ -106,7 +147,6 @@ const ChatDrawer: FC<{}> = () => {
                         overflow: 'hidden'
                     }}
                     sx={{
-                        // minHeight: 300,
                         height: "100%",
                         m: 0,
                         p: 0
